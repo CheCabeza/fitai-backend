@@ -48,19 +48,21 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
   customSiteTitle: 'FitAI API Documentation',
 }));
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/ai', aiRoutes);
-
 // Health check endpoint
-app.get('/health', (_req: Request, res: Response) => {
+app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
     environment: process.env['NODE_ENV'] || 'development',
+    version: '1.0.0',
+    uptime: process.uptime(),
   });
 });
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {
@@ -68,7 +70,7 @@ app.get('/', (_req: Request, res: Response) => {
     message: 'FitAI Backend API',
     version: '1.0.0',
     documentation: '/api-docs',
-    health: '/health',
+    health: '/api/health',
   });
 });
 
