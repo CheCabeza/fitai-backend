@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { config } from 'dotenv';
 import path from 'path';
+import crypto from 'crypto';
 
 // Cargar variables de entorno según el NODE_ENV
 const env = process.env.NODE_ENV || 'development';
