@@ -1,13 +1,36 @@
-import dotenv from 'dotenv';
 import app from './src/app';
+import { getConfig, isDevelopment, isProduction, isTest } from './src/config/env';
 
-// Cargar variables de entorno
-dotenv.config();
+// Load and validate configuration
+const config = getConfig();
 
-const PORT = process.env['PORT'] || 3001;
+const PORT = config.PORT;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor FitAI ejecutándose en puerto ${PORT}`);
-  console.log(`📊 Ambiente: ${process.env['NODE_ENV']}`);
+  console.log(`🚀 FitAI Server running on port ${PORT}`);
+  console.log(`📊 Environment: ${config.NODE_ENV}`);
   console.log(`🔗 URL: http://localhost:${PORT}`);
+  
+  // Additional information based on environment
+  if (isDevelopment()) {
+    console.log(`🔧 Development mode activated`);
+    console.log(`📚 Documentation: http://localhost:${PORT}/api-docs`);
+    console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+  }
+  
+  if (isProduction()) {
+    console.log(`🚀 Production mode activated`);
+    console.log(`🔒 Security: Enabled`);
+  }
+  
+  if (isTest()) {
+    console.log(`🧪 Test mode activated`);
+  }
+  
+  // Database information
+  if (config.DATABASE_URL.includes('supabase')) {
+    console.log(`🗄️  Database: Supabase`);
+  } else {
+    console.log(`🗄️  Database: Local PostgreSQL`);
+  }
 });

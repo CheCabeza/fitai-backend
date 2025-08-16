@@ -1,95 +1,32 @@
-import { User } from '@prisma/client';
+import { users } from '@prisma/client';
 import { Request, Response } from 'express';
 
-// Extend Express Request to include user
+// Extend the Prisma types with additional properties
+export interface AuthenticatedUser extends users {
+  // Add any additional properties needed for authenticated users
+}
+
+// Request with user property
 export interface AuthenticatedRequest extends Request {
-  user?: Partial<User>;
+  user?: AuthenticatedUser;
 }
 
-// User types
-export interface UserRegistrationData {
+// JWT payload interface
+export interface JWTPayload {
+  userId: string;
   email: string;
-  password: string;
-  name: string;
-  age?: number;
-  weight?: number;
-  height?: number;
-  goal?: 'lose_weight' | 'gain_muscle' | 'maintain' | 'fitness';
-  activityLevel?: 'sedentary' | 'light' | 'moderate' | 'very' | 'extreme';
-  restrictions?: string[];
+  iat?: number;
+  exp?: number;
 }
 
-export interface RegisterRequest extends AuthenticatedRequest {
-  body: UserRegistrationData;
+// AI response interface
+export interface AIResponse {
+  success: boolean;
+  data: any;
+  message?: string;
 }
 
-// Response tipado genérico para la API
-export type ApiResponseExpress<T = any> = Response<ApiResponse<T>>;
-
-export interface UserLoginData {
-  email: string;
-  password: string;
-}
-
-export interface UserProfileUpdateData {
-  name?: string;
-  age?: number;
-  weight?: number;
-  height?: number;
-  goal?: 'lose_weight' | 'gain_muscle' | 'maintain' | 'fitness';
-  activityLevel?: 'sedentary' | 'light' | 'moderate' | 'very' | 'extreme';
-  restrictions?: string[];
-}
-
-export interface PasswordChangeData {
-  currentPassword: string;
-  newPassword: string;
-}
-
-// AI types
-export interface MealPlanRequest {
-  date: string;
-  preferences?: Record<string, any>;
-  restrictions?: string[];
-  targetCalories?: number;
-}
-
-export interface WorkoutPlanRequest {
-  date: string;
-  focus?: 'full_body' | 'upper_body' | 'lower_body' | 'cardio' | 'strength' | 'flexibility';
-  duration?: number;
-  equipment?: string[];
-}
-
-export interface UserLogData {
-  type: 'food' | 'exercise' | 'weight' | 'measurement';
-  data: Record<string, any>;
-  calories?: number;
-  date?: string;
-}
-
-// Food and Exercise types
-export interface FoodItem {
-  id: string;
-  name: string;
-  calories: number;
-  protein?: number;
-  carbs?: number;
-  fat?: number;
-  fiber?: number;
-  category?: string;
-  createdAt: Date;
-}
-
-export interface FoodItemBasic {
-  name: string;
-  calories: number;
-  protein?: number;
-  carbs?: number;
-  fat?: number;
-  fiber?: number;
-}
-
+// Exercise interface
 export interface Exercise {
   id: string;
   name: string;
@@ -100,52 +37,92 @@ export interface Exercise {
   caloriesPerMin?: number;
   description?: string;
   instructions: string[];
-  createdAt: Date;
 }
 
-// Meal Plan types
-export interface Meal {
+// Food item interface
+export interface FoodItem {
+  id: string;
   name: string;
-  foods: FoodItemBasic[];
-  totalCalories: number;
+  category?: string;
+  calories: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  fiber?: number;
 }
 
+// Meal plan interface (for AI generation)
 export interface MealPlan {
-  meals: {
-    breakfast: Meal;
-    lunch: Meal;
-    dinner: Meal;
-    snacks: FoodItemBasic[];
-  };
+  meals: any;
   totalCalories: number;
-  recommendations: string[];
+  recommendations?: string[];
 }
 
-// Workout Plan types
-export interface WorkoutExercise {
-  name: string;
-  sets: number;
-  reps: number;
-  duration?: number;
-  rest: number;
-  instructions: string[];
-}
-
+// Workout plan interface (for AI generation)
 export interface WorkoutPlan {
-  exercises: WorkoutExercise[];
+  exercises: any;
   duration: number;
-  focus: string;
-  difficulty: string;
-  recommendations: string[];
+  focus?: string;
+  difficulty?: string;
+  recommendations?: string[];
 }
 
-// Fitness Recommendations
+// User log interface
+export interface UserLog {
+  id: string;
+  userId: string;
+  date: Date;
+  type: string;
+  data: any;
+  calories?: number;
+}
+
+// Fitness recommendations interface
 export interface FitnessRecommendations {
   recommendations: string[];
-  goal: string;
-  activityLevel: string;
-  estimatedCalories: number;
+  goal?: string;
+  activityLevel?: string;
+  estimatedCalories?: number;
 }
+
+// User registration data
+export interface UserRegistrationData {
+  email: string;
+  password: string;
+  name: string;
+  age?: number;
+  weight?: number;
+  height?: number;
+  goal?: string;
+  activityLevel?: string;
+  restrictions?: string[];
+}
+
+// User login data
+export interface UserLoginData {
+  email: string;
+  password: string;
+}
+
+// User profile update data
+export interface UserProfileUpdateData {
+  name?: string;
+  age?: number;
+  weight?: number;
+  height?: number;
+  goal?: string;
+  activityLevel?: string;
+  restrictions?: string[];
+}
+
+// Password change data
+export interface PasswordChangeData {
+  currentPassword: string;
+  newPassword: string;
+}
+
+// API response type
+export type ApiResponseExpress = Response;
 
 // API Response types
 export interface ApiResponse<T = any> {
@@ -163,14 +140,6 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
     total: number;
     totalPages: number;
   };
-}
-
-// JWT Payload
-export interface JWTPayload {
-  userId: string;
-  email: string;
-  iat: number;
-  exp: number;
 }
 
 // Environment variables

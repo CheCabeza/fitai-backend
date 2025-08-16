@@ -1,111 +1,108 @@
 import { NextFunction, Request, Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
-import { ValidationError } from '../types';
 
 // Middleware to handle validation errors
-export const handleValidationErrors = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
+export const handleValidationErrors = (req: Request, res: Response, next: NextFunction): void => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({
-      error: 'Error de validación',
-      details: errors.array().map((err): ValidationError => ({
-        field: err.type === 'field' ? err.path : 'unknown',
-        message: err.msg,
-        value: err.type === 'field' ? err.value : undefined,
-      })),
+      success: false,
+      error: 'Validation error',
+      details: errors.array(),
     });
     return;
   }
   next();
 };
 
-// Registration validations
+// User registration validations
 export const validateRegistration = [
-  body('email').isEmail().withMessage('Email debe ser válido').normalizeEmail(),
+  body('email')
+    .isEmail()
+    .withMessage('Email must be a valid email address')
+    .normalizeEmail(),
   body('password')
     .isLength({ min: 6 })
-    .withMessage('Contraseña debe tener al menos 6 caracteres')
+    .withMessage('Password must be at least 6 characters long')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('Contraseña debe contener al menos una mayúscula, una minúscula y un número'),
+    .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
   body('name')
     .isLength({ min: 2, max: 50 })
-    .withMessage('Nombre debe tener entre 2 y 50 caracteres')
-    .trim()
-    .escape(),
+    .withMessage('Name must be between 2 and 50 characters long')
+    .trim(),
   body('age')
     .optional()
     .isInt({ min: 13, max: 120 })
-    .withMessage('Edad debe ser entre 13 y 120 años'),
+    .withMessage('Age must be between 13 and 120'),
   body('weight')
     .optional()
     .isFloat({ min: 30, max: 300 })
-    .withMessage('Peso debe ser entre 30 y 300 kg'),
+    .withMessage('Weight must be between 30 and 300 kg'),
   body('height')
     .optional()
     .isFloat({ min: 100, max: 250 })
-    .withMessage('Altura debe ser entre 100 y 250 cm'),
+    .withMessage('Height must be between 100 and 250 cm'),
   body('goal')
     .optional()
-    .isIn(['lose_weight', 'gain_muscle', 'maintain', 'fitness'])
-    .withMessage('Objetivo debe ser uno de: lose_weight, gain_muscle, maintain, fitness'),
+    .isIn(['lose_weight', 'gain_muscle', 'maintain', 'improve_fitness'])
+    .withMessage('Goal must be one of: lose_weight, gain_muscle, maintain, improve_fitness'),
   body('activityLevel')
     .optional()
     .isIn(['sedentary', 'light', 'moderate', 'very', 'extreme'])
-    .withMessage('Nivel de actividad debe ser uno de: sedentary, light, moderate, very, extreme'),
-  body('restrictions').optional().isArray().withMessage('Restricciones debe ser un array'),
+    .withMessage('Activity level must be one of: sedentary, light, moderate, very, extreme'),
   handleValidationErrors,
 ];
 
-// Login validations
+// User login validations
 export const validateLogin = [
-  body('email').isEmail().withMessage('Email debe ser válido').normalizeEmail(),
-  body('password').notEmpty().withMessage('Contraseña es requerida'),
+  body('email')
+    .isEmail()
+    .withMessage('Email must be a valid email address')
+    .normalizeEmail(),
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required'),
   handleValidationErrors,
 ];
 
-// Profile update validations
+// User profile update validations
 export const validateProfileUpdate = [
   body('name')
     .optional()
     .isLength({ min: 2, max: 50 })
-    .withMessage('Nombre debe tener entre 2 y 50 caracteres')
-    .trim()
-    .escape(),
+    .withMessage('Name must be between 2 and 50 characters long')
+    .trim(),
   body('age')
     .optional()
     .isInt({ min: 13, max: 120 })
-    .withMessage('Edad debe ser entre 13 y 120 años'),
+    .withMessage('Age must be between 13 and 120'),
   body('weight')
     .optional()
     .isFloat({ min: 30, max: 300 })
-    .withMessage('Peso debe ser entre 30 y 300 kg'),
+    .withMessage('Weight must be between 30 and 300 kg'),
   body('height')
     .optional()
     .isFloat({ min: 100, max: 250 })
-    .withMessage('Altura debe ser entre 100 y 250 cm'),
+    .withMessage('Height must be between 100 and 250 cm'),
   body('goal')
     .optional()
-    .isIn(['lose_weight', 'gain_muscle', 'maintain', 'fitness'])
-    .withMessage('Objetivo debe ser uno de: lose_weight, gain_muscle, maintain, fitness'),
+    .isIn(['lose_weight', 'gain_muscle', 'maintain', 'improve_fitness'])
+    .withMessage('Goal must be one of: lose_weight, gain_muscle, maintain, improve_fitness'),
   body('activityLevel')
     .optional()
     .isIn(['sedentary', 'light', 'moderate', 'very', 'extreme'])
-    .withMessage('Nivel de actividad debe ser uno de: sedentary, light, moderate, very, extreme'),
+    .withMessage('Activity level must be one of: sedentary, light, moderate, very, extreme'),
   handleValidationErrors,
 ];
 
 // Password change validations
 export const validatePasswordChange = [
-  body('currentPassword').notEmpty().withMessage('Contraseña actual es requerida'),
+  body('currentPassword').notEmpty().withMessage('Current password is required'),
   body('newPassword')
     .isLength({ min: 6 })
-    .withMessage('Nueva contraseña debe tener al menos 6 caracteres')
+    .withMessage('New password must be at least 6 characters long')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('Nueva contraseña debe contener al menos una mayúscula, una minúscula y un número'),
+    .withMessage('New password must contain at least one lowercase letter, one uppercase letter, and one number'),
   handleValidationErrors,
 ];
 
@@ -113,61 +110,61 @@ export const validatePasswordChange = [
 export const validateLogCreation = [
   body('type')
     .isIn(['food', 'exercise', 'weight', 'measurement'])
-    .withMessage('Tipo debe ser uno de: food, exercise, weight, measurement'),
-  body('data').isObject().withMessage('Datos debe ser un objeto'),
+    .withMessage('Type must be one of: food, exercise, weight, measurement'),
+  body('data').isObject().withMessage('Data must be an object'),
   body('calories')
     .optional()
     .isInt({ min: 0, max: 5000 })
-    .withMessage('Calorías debe ser entre 0 y 5000'),
-  body('date').optional().isISO8601().withMessage('Fecha debe ser válida'),
+    .withMessage('Calories must be between 0 and 5000'),
+  body('date').optional().isISO8601().withMessage('Date must be valid'),
   handleValidationErrors,
 ];
 
 // Meal plan creation validations
 export const validateMealPlanCreation = [
-  body('date').isISO8601().withMessage('Fecha debe ser válida'),
-  body('meals').isObject().withMessage('Comidas debe ser un objeto'),
+  body('date').isISO8601().withMessage('Date must be valid'),
+  body('meals').isObject().withMessage('Meals must be an object'),
   body('totalCalories')
     .isInt({ min: 500, max: 5000 })
-    .withMessage('Calorías totales debe ser entre 500 y 5000'),
+    .withMessage('Total calories must be between 500 and 5000'),
   handleValidationErrors,
 ];
 
 // Workout plan creation validations
 export const validateWorkoutPlanCreation = [
-  body('date').isISO8601().withMessage('Fecha debe ser válida'),
-  body('exercises').isArray().withMessage('Ejercicios debe ser un array'),
+  body('date').isISO8601().withMessage('Date must be valid'),
+  body('exercises').isArray().withMessage('Exercises must be an array'),
   body('duration')
     .optional()
     .isInt({ min: 10, max: 300 })
-    .withMessage('Duración debe ser entre 10 y 300 minutos'),
+    .withMessage('Duration must be between 10 and 300 minutes'),
   handleValidationErrors,
 ];
 
 // Meal plan generation validations
 export const validateMealPlanGeneration = [
-  body('date').isISO8601().withMessage('Fecha debe ser válida'),
-  body('preferences').optional().isObject().withMessage('Preferencias debe ser un objeto'),
-  body('restrictions').optional().isArray().withMessage('Restricciones debe ser un array'),
+  body('date').isISO8601().withMessage('Date must be valid'),
+  body('preferences').optional().isObject().withMessage('Preferences must be an object'),
+  body('restrictions').optional().isArray().withMessage('Restrictions must be an array'),
   body('targetCalories')
     .optional()
     .isInt({ min: 1000, max: 5000 })
-    .withMessage('Calorías objetivo debe ser entre 1000 y 5000'),
+    .withMessage('Target calories must be between 1000 and 5000'),
   handleValidationErrors,
 ];
 
 // Workout plan generation validations
 export const validateWorkoutPlanGeneration = [
-  body('date').isISO8601().withMessage('Fecha debe ser válida'),
+  body('date').isISO8601().withMessage('Date must be valid'),
   body('focus')
     .optional()
     .isIn(['full_body', 'upper_body', 'lower_body', 'cardio', 'strength', 'flexibility'])
-    .withMessage('Enfoque debe ser uno de: full_body, upper_body, lower_body, cardio, strength, flexibility'),
+    .withMessage('Focus must be one of: full_body, upper_body, lower_body, cardio, strength, flexibility'),
   body('duration')
     .optional()
     .isInt({ min: 15, max: 180 })
-    .withMessage('Duración debe ser entre 15 y 180 minutos'),
-  body('equipment').optional().isArray().withMessage('Equipamiento debe ser un array'),
+    .withMessage('Duration must be between 15 and 180 minutes'),
+  body('equipment').optional().isArray().withMessage('Equipment must be an array'),
   handleValidationErrors,
 ];
 
@@ -176,20 +173,20 @@ export const validateQueryParams = [
   query('limit')
     .optional()
     .isInt({ min: 1, max: 100 })
-    .withMessage('Límite debe ser entre 1 y 100'),
+    .withMessage('Limit must be between 1 and 100'),
   query('startDate')
     .optional()
     .isISO8601()
-    .withMessage('Fecha de inicio debe ser válida'),
+    .withMessage('Start date must be valid'),
   query('endDate')
     .optional()
     .isISO8601()
-    .withMessage('Fecha de fin debe ser válida'),
+    .withMessage('End date must be valid'),
   handleValidationErrors,
 ];
 
 // Route parameter validations
 export const validateIdParam = [
-  param('id').isUUID().withMessage('ID debe ser un UUID válido'),
+  param('id').isUUID().withMessage('ID must be a valid UUID'),
   handleValidationErrors,
 ];

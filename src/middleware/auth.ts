@@ -23,15 +23,8 @@ export const authenticateToken = async (
     const decoded = jwt.verify(token, process.env['JWT_SECRET']!) as JWTPayload;
 
     // Verify user exists in database
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: decoded.userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        goal: true,
-        activityLevel: true,
-      },
     });
 
     if (!user) {
@@ -68,15 +61,8 @@ export const optionalAuth = async (
 
     if (token) {
       const decoded = jwt.verify(token, process.env['JWT_SECRET']!) as JWTPayload;
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: decoded.userId },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          goal: true,
-          activityLevel: true,
-        },
       });
       if (user) {
         req.user = user;

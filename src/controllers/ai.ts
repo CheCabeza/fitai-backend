@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import crypto from 'crypto';
 import { ApiResponseExpress, AuthenticatedRequest } from '../types';
 import { generateMealPlan, generateWorkoutPlan } from '../utils/ai';
 
@@ -16,7 +17,7 @@ const createMealPlan = async (req: AuthenticatedRequest, res: ApiResponseExpress
     const { date } = req.body;
 
     // Get user data
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id },
     });
 
@@ -35,8 +36,9 @@ const createMealPlan = async (req: AuthenticatedRequest, res: ApiResponseExpress
     });
 
     // Save plan to database
-    const savedPlan = await prisma.mealPlan.create({
+    const savedPlan = await prisma.meal_plans.create({
       data: {
+        id: crypto.randomUUID(),
         userId: id,
         date: new Date(date),
         meals: JSON.stringify(mealPlan.meals),
@@ -67,7 +69,7 @@ const createWorkoutPlan = async (req: AuthenticatedRequest, res: ApiResponseExpr
     const { date } = req.body;
 
     // Get user data
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id },
     });
 
@@ -86,12 +88,13 @@ const createWorkoutPlan = async (req: AuthenticatedRequest, res: ApiResponseExpr
     });
 
     // Save plan to database
-    const savedPlan = await prisma.workoutPlan.create({
+    const savedPlan = await prisma.workout_plans.create({
       data: {
+        id: crypto.randomUUID(),
         userId: id,
         date: new Date(date),
         exercises: JSON.stringify(workoutPlan.exercises),
-        duration: workoutPlan.duration,
+        duration: workoutPlan.duration || null,
       },
     });
 

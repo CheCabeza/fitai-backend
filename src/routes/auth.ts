@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import express, { Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { authenticateToken } from '../middleware/auth';
@@ -31,7 +32,7 @@ authRoutes.post('/register', validateRegistration, async (req: AuthenticatedRequ
     }
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.users.findUnique({
       where: { email },
     });
 
@@ -44,8 +45,9 @@ authRoutes.post('/register', validateRegistration, async (req: AuthenticatedRequ
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create user
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
+        id: crypto.randomUUID(),
         email,
         password: hashedPassword,
         name,
@@ -55,6 +57,7 @@ authRoutes.post('/register', validateRegistration, async (req: AuthenticatedRequ
         goal: goal || null,
         activityLevel: activityLevel || null,
         restrictions: restrictions || [],
+        updatedAt: new Date(),
       },
       select: {
         id: true,
@@ -97,7 +100,7 @@ authRoutes.post('/login', validateLogin, async (req: AuthenticatedRequest, res: 
     }
 
     // Find user
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { email },
     });
 
@@ -141,7 +144,7 @@ authRoutes.get('/profile', authenticateToken, async (req: AuthenticatedRequest, 
       return;
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: req.user.id },
       select: {
         id: true,
@@ -189,7 +192,7 @@ authRoutes.put('/profile', authenticateToken, validateProfileUpdate, async (req:
     if (activityLevel !== undefined) userData.activityLevel = activityLevel;
     if (restrictions !== undefined) userData.restrictions = restrictions;
 
-    const user = await prisma.user.update({
+    const user = await prisma.users.update({
       where: { id: req.user.id },
       data: userData,
       select: {
@@ -240,7 +243,7 @@ authRoutes.put('/change-password', authenticateToken, validatePasswordChange, as
     }
 
     // Get user with password
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: req.user.id },
     });
 
@@ -261,7 +264,7 @@ authRoutes.put('/change-password', authenticateToken, validatePasswordChange, as
     const hashedNewPassword = await bcrypt.hash(newPassword, 12);
 
     // Update password
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: req.user.id },
       data: { password: hashedNewPassword },
     });
@@ -281,7 +284,7 @@ authRoutes.delete('/account', authenticateToken, async (req: AuthenticatedReques
       return;
     }
 
-    await prisma.user.delete({
+    await prisma.users.delete({
       where: { id: req.user.id },
     });
 

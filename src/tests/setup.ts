@@ -6,7 +6,7 @@ process.env['DATABASE_URL'] = 'postgresql://user:password@localhost:5432/fitai_t
 // Mock Prisma Client for tests
 jest.mock('@prisma/client', () => {
   const mockPrismaClient = {
-    user: {
+    users: {
       findUnique: jest.fn().mockResolvedValue({
         id: 'test-user-id',
         email: 'test@example.com',
@@ -38,7 +38,7 @@ jest.mock('@prisma/client', () => {
       update: jest.fn(),
       delete: jest.fn(),
     },
-    exercise: {
+    exercises: {
       findMany: jest.fn().mockResolvedValue([
         {
           id: 'exercise-1',
@@ -67,7 +67,7 @@ jest.mock('@prisma/client', () => {
       ]),
       create: jest.fn(),
     },
-    foodItem: {
+    food_items: {
       findMany: jest.fn().mockResolvedValue([
         {
           id: 'food-1',
@@ -94,15 +94,15 @@ jest.mock('@prisma/client', () => {
       ]),
       create: jest.fn(),
     },
-    userLog: {
+    user_logs: {
       create: jest.fn(),
       findMany: jest.fn(),
     },
-    mealPlan: {
+    meal_plans: {
       create: jest.fn(),
       findMany: jest.fn(),
     },
-    workoutPlan: {
+    workout_plans: {
       create: jest.fn(),
       findMany: jest.fn(),
     },

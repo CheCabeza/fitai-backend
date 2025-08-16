@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import crypto from 'crypto';
 import express, { Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types';
@@ -25,12 +26,12 @@ userRoutes.get('/logs', authenticateToken, async (req: AuthenticatedRequest, res
       if (endDate) where.date.lte = new Date(endDate as string);
     }
 
-    const logs = await prisma.userLog.findMany({
+    const logs = await prisma.user_logs.findMany({
       where,
       orderBy: { date: 'desc' },
       take: parseInt(limit as string),
       include: {
-        user: {
+        users: {
           select: { name: true, email: true },
         },
       },
@@ -53,8 +54,9 @@ userRoutes.post('/logs', authenticateToken, async (req: AuthenticatedRequest, re
 
     const { type, data, calories, date } = req.body;
 
-    const log = await prisma.userLog.create({
+    const log = await prisma.user_logs.create({
       data: {
+        id: crypto.randomUUID(),
         userId: req.user.id,
         type,
         data,
@@ -62,7 +64,7 @@ userRoutes.post('/logs', authenticateToken, async (req: AuthenticatedRequest, re
         date: date ? new Date(date) : new Date(),
       },
       include: {
-        user: {
+        users: {
           select: { name: true, email: true },
         },
       },
@@ -90,7 +92,7 @@ userRoutes.get('/meal-plans', authenticateToken, async (req: AuthenticatedReques
       if (endDate) where.date.lte = new Date(endDate as string);
     }
 
-    const mealPlans = await prisma.mealPlan.findMany({
+    const mealPlans = await prisma.meal_plans.findMany({
       where,
       orderBy: { date: 'desc' },
       take: parseInt(limit as string),
@@ -118,7 +120,7 @@ userRoutes.get('/workout-plans', authenticateToken, async (req: AuthenticatedReq
       if (endDate) where.date.lte = new Date(endDate as string);
     }
 
-    const workoutPlans = await prisma.workoutPlan.findMany({
+    const workoutPlans = await prisma.workout_plans.findMany({
       where,
       orderBy: { date: 'desc' },
       take: parseInt(limit as string),
@@ -147,9 +149,9 @@ userRoutes.get('/statistics', authenticateToken, async (req: AuthenticatedReques
     }
 
     const [totalLogs, totalMealPlans, totalWorkoutPlans] = await Promise.all([
-      prisma.userLog.count({ where }),
-      prisma.mealPlan.count({ where }),
-      prisma.workoutPlan.count({ where }),
+      prisma.user_logs.count({ where }),
+      prisma.meal_plans.count({ where }),
+      prisma.workout_plans.count({ where }),
     ]);
 
     res.json({

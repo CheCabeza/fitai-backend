@@ -1,6 +1,6 @@
 // AI utility functions with OpenAI
 import OpenAI from 'openai';
-import { FitnessRecommendations, MealPlan, WorkoutExercise, WorkoutPlan } from '../types';
+import { FitnessRecommendations, MealPlan, WorkoutPlan } from '../types';
 
 // Initialize OpenAI (only if API key is available)
 let openai: OpenAI | null = null;
@@ -93,7 +93,7 @@ const generateMealPlan = async ({ user, date, preferences, restrictions, targetC
       return {
         meals: aiPlan.meals,
         totalCalories: aiPlan.totalCalories,
-        recommendations: aiPlan.recommendations,
+        recommendations: aiPlan.recommendations || [],
       };
     }
     // Fallback to basic implementation
@@ -360,7 +360,14 @@ const generateBasicMealPlan = (_: MealPlanRequest): MealPlan => {
 };
 
 const generateBasicWorkoutPlan = (_: WorkoutPlanRequest): WorkoutPlan => {
-  const exercises: WorkoutExercise[] = [
+  const exercises: Array<{
+    name: string;
+    sets: number;
+    reps: number;
+    duration: number;
+    rest: number;
+    instructions: string[];
+  }> = [
     {
       name: 'Squats',
       sets: 3,

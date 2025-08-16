@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import crypto from 'crypto';
 import express from 'express';
 import { authenticateToken, optionalAuth } from '../middleware/auth';
 import { ApiResponseExpress, AuthenticatedRequest } from '../types';
@@ -27,7 +28,7 @@ aiRoutes.post('/generate-meal-plan', authenticateToken, async (req: Authenticate
     }
 
     // Get user data for personalization
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: req.user.id },
       select: {
         age: true,
@@ -49,8 +50,9 @@ aiRoutes.post('/generate-meal-plan', authenticateToken, async (req: Authenticate
     });
 
     // Save to database
-    const savedMealPlan = await prisma.mealPlan.create({
+    const savedMealPlan = await prisma.meal_plans.create({
       data: {
+        id: crypto.randomUUID(),
         userId: req.user.id,
         date: new Date(date),
         meals: JSON.stringify(mealPlan.meals),
@@ -64,7 +66,7 @@ aiRoutes.post('/generate-meal-plan', authenticateToken, async (req: Authenticate
       data: {
         ...savedMealPlan,
         aiGenerated: true,
-        recommendations: mealPlan.recommendations,
+        recommendations: (mealPlan as any).recommendations || [],
       },
     });
   } catch (error) {
@@ -89,7 +91,7 @@ aiRoutes.post('/generate-workout-plan', authenticateToken, async (req: Authentic
     }
 
     // Get user data for personalization
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: req.user.id },
       select: {
         age: true,
@@ -110,12 +112,13 @@ aiRoutes.post('/generate-workout-plan', authenticateToken, async (req: Authentic
     });
 
     // Save to database
-    const savedWorkoutPlan = await prisma.workoutPlan.create({
+    const savedWorkoutPlan = await prisma.workout_plans.create({
       data: {
+        id: crypto.randomUUID(),
         userId: req.user.id,
         date: new Date(date),
         exercises: JSON.stringify(workoutPlan.exercises),
-        duration: workoutPlan.duration,
+        duration: workoutPlan.duration || null,
       },
     });
 
@@ -125,7 +128,7 @@ aiRoutes.post('/generate-workout-plan', authenticateToken, async (req: Authentic
       data: {
         ...savedWorkoutPlan,
         aiGenerated: true,
-        recommendations: workoutPlan.recommendations,
+        recommendations: (workoutPlan as any).recommendations || [],
       },
     });
   } catch (error) {
@@ -143,7 +146,7 @@ aiRoutes.get('/recommendations', optionalAuth, async (req: AuthenticatedRequest,
 
     if (req.user?.id) {
       // If user is authenticated, use their data
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: req.user.id },
         select: {
           age: true,
@@ -201,18 +204,18 @@ aiRoutes.get('/progress-analysis', authenticateToken, async (req: AuthenticatedR
     }
 
     // Get logs from the period
-    const logs = await prisma.userLog.findMany({
+    const logs = await prisma.user_logs.findMany({
       where,
       orderBy: { date: 'asc' },
     });
 
     // Get meal and workout plans
-    const mealPlans = await prisma.mealPlan.findMany({
+    const mealPlans = await prisma.meal_plans.findMany({
       where,
       orderBy: { date: 'asc' },
     });
 
-    const workoutPlans = await prisma.workoutPlan.findMany({
+    const workoutPlans = await prisma.workout_plans.findMany({
       where,
       orderBy: { date: 'asc' },
     });
@@ -318,7 +321,7 @@ aiRoutes.get('/exercises', optionalAuth, async (req: AuthenticatedRequest, res: 
       ];
     }
 
-    const exercises = await prisma.exercise.findMany({
+    const exercises = await prisma.exercises.findMany({
       where,
       take: 50,
       orderBy: { name: 'asc' },
@@ -348,7 +351,7 @@ aiRoutes.get('/foods', optionalAuth, async (req: AuthenticatedRequest, res: ApiR
       if (maxCalories) where.calories.lte = parseFloat(maxCalories as string);
     }
 
-    const foods = await prisma.foodItem.findMany({
+    const foods = await prisma.food_items.findMany({
       where,
       take: 50,
       orderBy: { name: 'asc' },

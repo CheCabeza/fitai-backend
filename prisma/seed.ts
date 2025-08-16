@@ -1,4 +1,16 @@
 import { PrismaClient } from '@prisma/client';
+import { config } from 'dotenv';
+import path from 'path';
+
+// Cargar variables de entorno según el NODE_ENV
+const env = process.env.NODE_ENV || 'development';
+const envFile = `.env.${env}`;
+config({ path: path.resolve(process.cwd(), envFile) });
+
+// Si no existe el archivo específico, cargar .env por defecto
+if (!process.env.DATABASE_URL) {
+  config({ path: path.resolve(process.cwd(), '.env') });
+}
 
 const prisma = new PrismaClient();
 
@@ -23,11 +35,11 @@ interface FoodData {
 }
 
 async function main(): Promise<void> {
-  console.log('🌱 Iniciando seed de la base de datos...');
+  console.log('🌱 Starting database seed...');
 
   // Clear existing data
-  await prisma.exercise.deleteMany();
-  await prisma.foodItem.deleteMany();
+  await prisma.exercises.deleteMany();
+  await prisma.food_items.deleteMany();
 
   // Sample exercises
   const exercises: ExerciseData[] = [
@@ -38,14 +50,14 @@ async function main(): Promise<void> {
       muscleGroup: 'chest',
       equipment: 'bodyweight',
       instructions: [
-        'Colócate en posición de plancha con las manos separadas al ancho de los hombros',
-        'Baja el cuerpo hasta que el pecho casi toque el suelo',
-        'Empuja hacia arriba hasta la posición inicial',
-        'Mantén el cuerpo en línea recta durante todo el movimiento',
+        'Get into a plank position with hands shoulder-width apart',
+        'Lower your body until your chest almost touches the ground',
+        'Push up to the starting position',
+        'Keep your body in a straight line throughout the movement',
       ],
       difficulty: 'beginner',
       caloriesPerMin: 8,
-      description: 'Flexiones de pecho para desarrollar fuerza en el tren superior',
+      description: 'Chest push-ups to develop upper body strength',
     },
     {
       name: 'Bench Press',
@@ -53,14 +65,14 @@ async function main(): Promise<void> {
       muscleGroup: 'chest',
       equipment: 'barbell',
       instructions: [
-        'Acuéstate en el banco con los pies firmes en el suelo',
-        'Agarra la barra con las manos separadas al ancho de los hombros',
-        'Baja la barra controladamente hacia el pecho',
-        'Empuja la barra hacia arriba hasta extender los brazos',
+        'Lie on the bench with feet firmly on the ground',
+        'Grab the bar with hands shoulder-width apart',
+        'Lower the bar controlled towards your chest',
+        'Push the bar up until arms are extended',
       ],
       difficulty: 'intermediate',
       caloriesPerMin: 6,
-      description: 'Press de banca con barra para desarrollar el pecho',
+      description: 'Barbell bench press to develop chest',
     },
     {
       name: 'Pull-ups',
@@ -68,14 +80,14 @@ async function main(): Promise<void> {
       muscleGroup: 'back',
       equipment: 'bodyweight',
       instructions: [
-        'Cuelga de la barra con las manos separadas al ancho de los hombros',
-        'Tira del cuerpo hacia arriba hasta que la barbilla pase la barra',
-        'Baja controladamente a la posición inicial',
-        'Mantén el cuerpo recto durante todo el movimiento',
+        'Hang from the bar with hands shoulder-width apart',
+        'Pull your body up until your chin passes the bar',
+        'Lower controlled to the starting position',
+        'Keep your body straight throughout the movement',
       ],
       difficulty: 'intermediate',
       caloriesPerMin: 9,
-      description: 'Dominadas para desarrollar la espalda',
+      description: 'Pull-ups to develop back',
     },
     {
       name: 'Squats',
@@ -83,14 +95,14 @@ async function main(): Promise<void> {
       muscleGroup: 'legs',
       equipment: 'bodyweight',
       instructions: [
-        'Ponte de pie con los pies separados al ancho de los hombros',
-        'Baja el cuerpo como si te sentaras en una silla',
-        'Mantén las rodillas alineadas con los dedos de los pies',
-        'Regresa a la posición inicial',
+        'Stand with feet shoulder-width apart',
+        'Lower your body as if sitting in a chair',
+        'Keep knees aligned with toes',
+        'Return to starting position',
       ],
       difficulty: 'beginner',
       caloriesPerMin: 8,
-      description: 'Sentadillas para desarrollar las piernas',
+      description: 'Squats to develop legs',
     },
     {
       name: 'Running',
@@ -98,14 +110,14 @@ async function main(): Promise<void> {
       muscleGroup: 'full_body',
       equipment: 'bodyweight',
       instructions: [
-        'Mantén una postura erguida con los hombros relajados',
-        'Aterriza suavemente con el medio del pie',
-        'Mantén un ritmo constante y respiración controlada',
-        'Aumenta gradualmente la velocidad',
+        'Maintain an upright posture with relaxed shoulders',
+        'Land softly with the middle of your foot',
+        'Keep a steady pace and controlled breathing',
+        'Gradually increase speed',
       ],
       difficulty: 'beginner',
       caloriesPerMin: 12,
-      description: 'Correr para mejorar la resistencia cardiovascular',
+      description: 'Running to improve cardiovascular endurance',
     },
     {
       name: 'Plank',
@@ -113,14 +125,14 @@ async function main(): Promise<void> {
       muscleGroup: 'core',
       equipment: 'bodyweight',
       instructions: [
-        'Colócate en posición de plancha con los antebrazos en el suelo',
-        'Mantén el cuerpo en línea recta desde la cabeza hasta los pies',
-        'Aprieta los músculos del core',
-        'Mantén la posición durante el tiempo especificado',
+        'Get into a plank position with forearms on the ground',
+        'Keep your body in a straight line from head to feet',
+        'Engage your core muscles',
+        'Hold the position for the specified time',
       ],
       difficulty: 'beginner',
       caloriesPerMin: 4,
-      description: 'Plancha para fortalecer el core',
+      description: 'Plank to strengthen core',
     },
   ];
 
@@ -128,7 +140,7 @@ async function main(): Promise<void> {
   const foods: FoodData[] = [
     // Proteins
     {
-      name: 'Pechuga de pollo',
+      name: 'Chicken breast',
       category: 'protein',
       calories: 165,
       protein: 31,
@@ -136,7 +148,7 @@ async function main(): Promise<void> {
       fat: 3.6,
     },
     {
-      name: 'Salmón',
+      name: 'Salmon',
       category: 'protein',
       calories: 208,
       protein: 25,
@@ -144,7 +156,7 @@ async function main(): Promise<void> {
       fat: 12,
     },
     {
-      name: 'Huevos',
+      name: 'Eggs',
       category: 'protein',
       calories: 155,
       protein: 13,
@@ -162,7 +174,7 @@ async function main(): Promise<void> {
 
     // Carbohydrates
     {
-      name: 'Arroz integral',
+      name: 'Brown rice',
       category: 'carbs',
       calories: 110,
       protein: 2.5,
@@ -178,7 +190,7 @@ async function main(): Promise<void> {
       fat: 1.9,
     },
     {
-      name: 'Avena',
+      name: 'Oatmeal',
       category: 'carbs',
       calories: 150,
       protein: 6,
@@ -188,7 +200,7 @@ async function main(): Promise<void> {
 
     // Fruits
     {
-      name: 'Plátano',
+      name: 'Banana',
       category: 'fruits',
       calories: 105,
       protein: 1.3,
@@ -196,7 +208,7 @@ async function main(): Promise<void> {
       fat: 0.4,
     },
     {
-      name: 'Manzana',
+      name: 'Apple',
       category: 'fruits',
       calories: 52,
       protein: 0.3,
@@ -206,7 +218,7 @@ async function main(): Promise<void> {
 
     // Vegetables
     {
-      name: 'Brócoli',
+      name: 'Broccoli',
       category: 'vegetables',
       calories: 55,
       protein: 3.7,
@@ -214,7 +226,7 @@ async function main(): Promise<void> {
       fat: 0.6,
     },
     {
-      name: 'Espinacas',
+      name: 'Spinach',
       category: 'vegetables',
       calories: 23,
       protein: 2.9,
@@ -224,7 +236,7 @@ async function main(): Promise<void> {
 
     // Healthy fats
     {
-      name: 'Almendras',
+      name: 'Almonds',
       category: 'fats',
       calories: 164,
       protein: 6,
@@ -232,7 +244,7 @@ async function main(): Promise<void> {
       fat: 14,
     },
     {
-      name: 'Aguacate',
+      name: 'Avocado',
       category: 'fats',
       calories: 160,
       protein: 2,
@@ -242,7 +254,7 @@ async function main(): Promise<void> {
 
     // Dairy
     {
-      name: 'Yogur griego',
+      name: 'Greek yogurt',
       category: 'dairy',
       calories: 130,
       protein: 23,
@@ -252,29 +264,35 @@ async function main(): Promise<void> {
   ];
 
   // Insert exercises
-  console.log('💪 Insertando ejercicios...');
+  console.log('💪 Inserting exercises...');
   for (const exercise of exercises) {
-    await prisma.exercise.create({
-      data: exercise,
+    await prisma.exercises.create({
+      data: {
+        id: crypto.randomUUID(),
+        ...exercise,
+      },
     });
   }
 
   // Insert foods
-  console.log('🍎 Insertando alimentos...');
+  console.log('🍎 Inserting foods...');
   for (const food of foods) {
-    await prisma.foodItem.create({
-      data: food,
+    await prisma.food_items.create({
+      data: {
+        id: crypto.randomUUID(),
+        ...food,
+      },
     });
   }
 
-  console.log('✅ Seed completado exitosamente!');
-  console.log(`📊 ${exercises.length} ejercicios insertados`);
-  console.log(`🍽️ ${foods.length} alimentos insertados`);
+  console.log('✅ Seed completed successfully!');
+  console.log(`📊 ${exercises.length} exercises inserted`);
+  console.log(`🍽️ ${foods.length} foods inserted`);
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error durante el seed:', e);
+    console.error('❌ Error during seed:', e);
     process.exit(1);
   })
   .finally(async () => {

@@ -17,10 +17,12 @@ Backend API for fitness and nutrition application with personalized artificial i
 ## 📋 Requirements
 
 - Node.js 18+
-- PostgreSQL 14+
+- PostgreSQL 14+ (or Supabase cloud database)
 - npm or yarn
 
 ## 🛠️ Installation
+
+### Option 1: Local PostgreSQL
 
 1. **Clone the repository**
 
@@ -82,6 +84,98 @@ npm run dev
 # Production
 npm start
 ```
+
+### Option 2: Supabase (Recommended) 🚀
+
+1. **Clone and install**
+
+```bash
+git clone <repository-url>
+cd fitai-backend
+npm install
+```
+
+2. **Create Supabase project**
+
+- Go to [supabase.com](https://supabase.com)
+- Create a free account
+- Create a new project
+- Get your database credentials
+
+3. **Configure environment**
+
+```bash
+cp .env.example .env
+```
+
+Update `.env` with your Supabase credentials:
+
+```env
+# Supabase Database
+DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"
+
+# JWT Secret
+JWT_SECRET="your_super_secure_jwt_secret_here_2024"
+
+# URLs
+FRONTEND_URL="http://localhost:3000"
+
+# OpenAI API (optional for AI)
+OPENAI_API_KEY="your_openai_api_key"
+
+# Environment
+NODE_ENV="development"
+
+# Port
+PORT=3001
+```
+
+4. **Setup database automatically**
+
+```bash
+# Run the setup script
+npm run supabase:setup
+```
+
+Or manually:
+
+```bash
+# Generate Prisma Client
+npm run db:generate
+
+# Apply schema to Supabase
+npm run db:push
+
+# Seed the database
+npm run db:seed
+```
+
+5. **Start server**
+
+```bash
+npm run dev
+```
+
+## 🗄️ Database Options
+
+### **Supabase (Recommended) ⭐**
+
+- **Free tier**: 500MB database, 50MB bandwidth
+- **Features**: PostgreSQL, real-time subscriptions, auth, storage
+- **Setup**: 5 minutes
+- **Perfect for**: Production apps, rapid development
+
+### **Local PostgreSQL**
+
+- **Setup**: Requires local PostgreSQL installation
+- **Features**: Full control, offline development
+- **Perfect for**: Development, learning
+
+### **Other Cloud Options**
+
+- **Neon**: Serverless PostgreSQL
+- **Railway**: Easy deployment with database
+- **PlanetScale**: MySQL alternative
 
 ## 📚 API Endpoints
 

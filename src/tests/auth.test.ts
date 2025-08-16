@@ -1,5 +1,9 @@
+import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
 import app from '../app';
+
+// Get the mocked Prisma client
+const mockPrisma = new PrismaClient() as jest.Mocked<PrismaClient>;
 
 describe('Auth Endpoints', () => {
   const testUser = {
@@ -22,13 +26,30 @@ describe('Auth Endpoints', () => {
 
   describe('POST /api/auth/register', () => {
     it('should register a new user successfully', async () => {
-      // Since our mock always returns a user, this test will fail
-      // We'll adjust the expectation to match the current mock behavior
+      // Mock findUnique to return null (user doesn't exist)
+      (mockPrisma.users.findUnique as jest.Mock).mockResolvedValueOnce(null);
+      
+      // Mock create to return a new user
+      (mockPrisma.users.create as jest.Mock).mockResolvedValueOnce({
+        id: 'new-user-id',
+        email: testUser.email,
+        name: testUser.name,
+        age: testUser.age,
+        weight: testUser.weight,
+        height: testUser.height,
+        goal: testUser.goal,
+        activityLevel: testUser.activityLevel,
+        restrictions: testUser.restrictions,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
       const res = await request(app).post('/api/auth/register').send(testUser);
 
-      // The mock always returns a user, so registration will fail with "Email is already registered"
-      expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty('error', 'Email is already registered');
+      expect(res.status).toBe(201);
+      expect(res.body).toHaveProperty('message', 'User registered successfully');
+      expect(res.body).toHaveProperty('user');
+      expect(res.body).toHaveProperty('token');
     });
 
     it('should fail with invalid email', async () => {
@@ -66,8 +87,10 @@ describe('Auth Endpoints', () => {
     });
 
     it('should fail with invalid credentials', async () => {
-      // Since our mock always returns a user and bcrypt.compare always returns true,
-      // this test will always pass. We'll adjust the expectation
+      // Mock bcrypt.compare to return false for invalid password
+      const bcrypt = require('bcryptjs');
+      (bcrypt.compare as jest.Mock).mockResolvedValueOnce(false);
+
       const res = await request(app)
         .post('/api/auth/login')
         .send({
@@ -75,9 +98,8 @@ describe('Auth Endpoints', () => {
           password: 'wrongpassword',
         });
 
-      // With our current mocks, this will always succeed
-      expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty('message', 'Login successful');
+      expect(res.status).toBe(401);
+      expect(res.body).toHaveProperty('error', 'Invalid credentials');
     });
   });
 

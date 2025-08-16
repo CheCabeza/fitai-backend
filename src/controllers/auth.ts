@@ -1,12 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { ApiResponseExpress, RegisterRequest, UserLoginData } from '../types';
+import { ApiResponseExpress, AuthenticatedRequest, UserLoginData } from '../types';
 
 const prisma = new PrismaClient();
 
 // User registration
-const register = async (req: RegisterRequest, res: ApiResponseExpress): Promise<void> => {
+const register = async (req: AuthenticatedRequest, res: ApiResponseExpress): Promise<void> => {
   try {
     const {
       email,
@@ -21,7 +21,7 @@ const register = async (req: RegisterRequest, res: ApiResponseExpress): Promise<
     } = req.body;
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.users.findUnique({
       where: { email },
     });
 
@@ -48,7 +48,7 @@ const register = async (req: RegisterRequest, res: ApiResponseExpress): Promise<
     if (goal !== undefined) userData.goal = goal;
     if (activityLevel !== undefined) userData.activityLevel = activityLevel;
 
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: userData,
     });
 
@@ -79,7 +79,7 @@ const login = async (req: { body: UserLoginData }, res: ApiResponseExpress): Pro
     const { email, password } = req.body;
 
     // Find user
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { email },
     });
 
@@ -118,6 +118,6 @@ const login = async (req: { body: UserLoginData }, res: ApiResponseExpress): Pro
 };
 
 export {
-    login, register
+  login, register
 };
 

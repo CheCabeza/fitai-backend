@@ -7,94 +7,76 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
+model exercises {
+  id             String   @id
+  name           String
+  category       String
+  muscleGroup    String
+  equipment      String
+  difficulty     String
+  caloriesPerMin Float?
+  description    String?
+  instructions   String[]
+  createdAt      DateTime @default(now())
+}
+
+model food_items {
+  id        String   @id
+  name      String
+  calories  Float
+  protein   Float?
+  carbs     Float?
+  fat       Float?
+  fiber     Float?
+  category  String?
+  createdAt DateTime @default(now())
+}
+
+model meal_plans {
+  id            String   @id
+  userId        String
+  date          DateTime
+  meals         Json
+  totalCalories Int
+  createdAt     DateTime @default(now())
+  users         users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model user_logs {
+  id        String   @id
+  userId    String
+  date      DateTime @default(now())
+  type      String
+  data      Json
+  calories  Int?
+  createdAt DateTime @default(now())
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model users {
+  id            String          @id
+  email         String          @unique
   password      String
   name          String
   age           Int?
   weight        Float?
   height        Float?
-  goal          String?  // "lose_weight", "gain_muscle", "maintain", "fitness"
-  activityLevel String?  // "sedentary", "light", "moderate", "very", "extreme"
-  restrictions  String[] // Array de restricciones alimentarias
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  // Relaciones
-  userLogs      UserLog[]
-  mealPlans     MealPlan[]
-  workoutPlans  WorkoutPlan[]
-  
-  @@map("users")
+  goal          String?
+  activityLevel String?
+  restrictions  String[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime
+  meal_plans    meal_plans[]
+  user_logs     user_logs[]
+  workout_plans workout_plans[]
 }
 
-model UserLog {
-  id          String   @id @default(cuid())
-  userId      String
-  date        DateTime @default(now())
-  type        String   // "food", "exercise", "weight", "measurement"
-  data        Json     // Datos flexibles según el tipo
-  calories    Int?     // Para comidas y ejercicios
-  createdAt   DateTime @default(now())
-  
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@map("user_logs")
-}
-
-model FoodItem {
-  id            String  @id @default(cuid())
-  name          String
-  calories      Float   // Por 100g
-  protein       Float?  // Por 100g
-  carbs         Float?  // Por 100g
-  fat           Float?  // Por 100g
-  fiber         Float?  // Por 100g
-  category      String? // "protein", "carb", "vegetable", etc.
-  createdAt     DateTime @default(now())
-  
-  @@map("food_items")
-}
-
-model Exercise {
-  id          String @id @default(cuid())
-  name        String
-  category    String // "strength", "cardio", "flexibility", "sports"
-  muscleGroup String // "chest", "back", "legs", etc.
-  equipment   String // "bodyweight", "dumbbell", "barbell", etc.
-  difficulty  String // "beginner", "intermediate", "advanced"
-  caloriesPerMin Float? // Calorías por minuto aproximadas
-  description String?
-  instructions String[]
-  createdAt   DateTime @default(now())
-  
-  @@map("exercises")
-}
-
-model MealPlan {
-  id        String   @id @default(cuid())
+model workout_plans {
+  id        String   @id
   userId    String
   date      DateTime
-  meals     Json     // Array de comidas estructuradas
-  totalCalories Int
+  exercises Json
+  duration  Int?
   createdAt DateTime @default(now())
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@map("meal_plans")
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
-model WorkoutPlan {
-  id        String   @id @default(cuid())
-  userId    String
-  date      DateTime
-  exercises Json     // Array de ejercicios estructurados
-  duration  Int?     // En minutos
-  createdAt DateTime @default(now())
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@map("workout_plans")
-}
-
