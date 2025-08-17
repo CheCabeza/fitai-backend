@@ -13,7 +13,7 @@ A Node.js/Express backend for the FitAI fitness application, built with TypeScri
 
 ## 📋 Prerequisites
 
-- Node.js 18 or higher
+- Node.js 20 or higher
 - npm or yarn
 - Supabase account and project
 - OpenAI API key (optional, for AI features)
