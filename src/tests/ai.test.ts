@@ -169,31 +169,30 @@ describe('AI Endpoints', () => {
 
     it('should filter foods by category', async () => {
       // Mock Supabase responses for filtered foods
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          limit: jest.fn().mockReturnValue({
-            order: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: 'food-1',
-                    name: 'Chicken Breast',
-                    description: 'Lean protein source',
-                    calories_per_100g: 165,
-                    protein_g: 31,
-                    carbs_g: 0,
-                    fat_g: 3.6,
-                    fiber_g: 0,
-                    category: 'protein',
-                    created_at: new Date(),
-                  },
-                ],
-                error: null,
-              }),
-            }),
-          }),
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        order: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({
+          data: [
+            {
+              id: 'food-1',
+              name: 'Chicken Breast',
+              description: 'Lean protein source',
+              calories_per_100g: 165,
+              protein_g: 31,
+              carbs_g: 0,
+              fat_g: 3.6,
+              fiber_g: 0,
+              category: 'protein',
+              created_at: new Date(),
+            },
+          ],
+          error: null,
         }),
-      });
+      };
+
+      mockSupabase.from.mockReturnValue(mockQuery);
 
       const res = await request(app).get('/api/ai/foods?category=protein');
 
