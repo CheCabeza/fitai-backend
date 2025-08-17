@@ -5,10 +5,10 @@ import jwt from 'jsonwebtoken';
 import { getSupabase, validateSupabaseConfig } from '../config/supabase';
 import { authenticateToken } from '../middleware/auth';
 import {
-    validateLogin,
-    validatePasswordChange,
-    validateProfileUpdate,
-    validateRegistration,
+  validateLogin,
+  validatePasswordChange,
+  validateProfileUpdate,
+  validateRegistration,
 } from '../middleware/validation';
 import { Inserts } from '../types/supabase';
 
@@ -458,15 +458,15 @@ authRoutes.get('/test', async (_req: AuthenticatedRequest, res: Response): Promi
         error: 'Supabase connection error', 
         details: error.message,
         code: error.code,
-        hint: 'This might mean the tables do not exist yet'
+        hint: 'This might mean the tables do not exist yet',
       });
       return;
     }
 
     res.json({ 
       message: 'Supabase connection successful',
-      data: data,
-      supabaseUrl: process.env['SUPABASE_URL']
+      data,
+      supabaseUrl: process.env['SUPABASE_URL'],
     });
   } catch (error) {
     console.error('Test error:', error);

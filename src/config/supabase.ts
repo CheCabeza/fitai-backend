@@ -14,8 +14,8 @@ export const getSupabase = (): SupabaseClient | null => {
       supabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
         auth: {
           autoRefreshToken: false,
-          persistSession: false
-        }
+          persistSession: false,
+        },
       });
     }
   }
@@ -32,8 +32,8 @@ export const getSupabaseAnon = (): SupabaseClient | null => {
       supabaseAnonClient = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
           autoRefreshToken: true,
-          persistSession: true
-        }
+          persistSession: true,
+        },
       });
     }
   }

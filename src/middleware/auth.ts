@@ -22,7 +22,7 @@ interface JWTPayload {
 export const authenticateToken = async (
   req: AuthenticatedRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const authHeader = req.headers['authorization'];
@@ -56,7 +56,7 @@ export const authenticateToken = async (
     req.user = {
       userId: user.id,
       id: user.id,
-      email: user.email
+      email: user.email,
     };
     next();
   } catch (error) {
@@ -78,7 +78,7 @@ export const authenticateToken = async (
 export const optionalAuth = async (
   req: AuthenticatedRequest,
   _res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const authHeader = req.headers['authorization'];
@@ -97,13 +97,13 @@ export const optionalAuth = async (
           req.user = {
             userId: user.id,
             id: user.id,
-            email: user.email
+            email: user.email,
           };
         }
       }
     }
     next();
-  } catch (error) {
+  } catch (_error) {
     // If there's an error with the token, just continue without user
     next();
   }

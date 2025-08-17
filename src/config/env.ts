@@ -58,7 +58,9 @@ export const validateConfig = () => {
   const hasSupabaseConfig = !!(ENV_CONFIG.SUPABASE_URL && ENV_CONFIG.SUPABASE_SERVICE_ROLE_KEY);
   
   if (!hasDatabaseUrl && !hasSupabaseConfig) {
-    throw new Error('Missing database configuration: Either DATABASE_URL or Supabase configuration (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY) is required');
+    throw new Error(
+      'Missing database configuration: Either DATABASE_URL or Supabase configuration (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY) is required',
+    );
   }
   
   if (missing.length > 0) {

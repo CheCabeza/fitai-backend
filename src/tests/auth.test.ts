@@ -30,8 +30,8 @@ describe('Auth Endpoints', () => {
       mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({ data: null, error: null })
-          })
+            single: jest.fn().mockResolvedValue({ data: null, error: null }),
+          }),
         }),
         insert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
@@ -51,10 +51,10 @@ describe('Auth Endpoints', () => {
                 created_at: new Date(),
                 updated_at: new Date(),
               },
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       const res = await request(app).post('/api/auth/register').send(testUser);
@@ -111,10 +111,10 @@ describe('Auth Endpoints', () => {
                 created_at: new Date(),
                 updated_at: new Date(),
               },
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       const res = await request(app)
@@ -137,9 +137,9 @@ describe('Auth Endpoints', () => {
       mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({ data: null, error: null })
-          })
-        })
+            single: jest.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+        }),
       });
 
       const res = await request(app)
@@ -176,10 +176,10 @@ describe('Auth Endpoints', () => {
                 created_at: new Date(),
                 updated_at: new Date(),
               },
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       const res = await request(app)

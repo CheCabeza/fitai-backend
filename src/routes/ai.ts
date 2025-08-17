@@ -12,7 +12,10 @@ import {
 export const aiRoutes = express.Router();
 
 // Generate personalized meal plan
-aiRoutes.post('/generate-meal-plan', authenticateToken, async (req: AuthenticatedRequest, res: ApiResponseExpress): Promise<void> => {
+aiRoutes.post(
+  '/generate-meal-plan',
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: ApiResponseExpress): Promise<void> => {
   try {
     const { date, preferences, restrictions, targetCalories } = req.body;
 
@@ -35,7 +38,9 @@ aiRoutes.post('/generate-meal-plan', authenticateToken, async (req: Authenticate
 
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('date_of_birth, weight_kg, height_cm, fitness_goals, activity_level, dietary_restrictions')
+      .select(
+        'date_of_birth, weight_kg, height_cm, fitness_goals, activity_level, dietary_restrictions',
+      )
       .eq('id', req.user.id)
       .single();
 

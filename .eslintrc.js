@@ -1,22 +1,20 @@
-import type { Linter } from 'eslint';
-
-const config: Linter.Config = {
+module.exports = {
   env: {
     node: true,
     es2021: true,
     jest: true,
   },
-  extends: ['eslint:recommended', '@typescript-eslint/recommended'],
+  extends: ['eslint:recommended'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
-    project: './tsconfig.json',
   },
   plugins: ['@typescript-eslint'],
   rules: {
     'no-console': 'warn',
-    'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    'no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     'prefer-const': 'error',
     'no-var': 'error',
     'object-shorthand': 'error',
@@ -37,5 +35,3 @@ const config: Linter.Config = {
   },
   ignorePatterns: ['node_modules/', 'coverage/', 'dist/'],
 };
-
-export default config;

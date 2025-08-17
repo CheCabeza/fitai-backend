@@ -80,10 +80,10 @@ const generateMealPlan = async ({ user, date, preferences, restrictions, targetC
       - Target calories: ${targetCalories}
       - Restrictions: ${restrictions.join(', ') || 'None'}
       - Preferences: ${
-        Object.entries(preferences)
-          .map(([k, v]) => `${k}: ${v}`)
-          .join(', ') || 'None'
-      }
+  Object.entries(preferences)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join(', ') || 'None'
+}
       
       Make sure the total calories are close to ${targetCalories} and that it's healthy and varied.`;
 
@@ -435,6 +435,6 @@ export {
   calculateEstimatedCalories,
   generateBasicMealPlan,
   generateBasicWorkoutPlan, generateMealPlan,
-  generateWorkoutPlan, getBasicRecommendations, getFitnessRecommendations
+  generateWorkoutPlan, getBasicRecommendations, getFitnessRecommendations,
 };
 

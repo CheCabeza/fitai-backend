@@ -70,6 +70,7 @@ PORT=3001
 4. **Setup Supabase Database**
 
 Follow the instructions in [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) to:
+
 - Create a Supabase project
 - Set up the database schema
 - Insert sample data

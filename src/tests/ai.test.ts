@@ -70,10 +70,10 @@ describe('AI Endpoints', () => {
                   created_at: new Date(),
                 },
               ],
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       const res = await request(app).get('/api/ai/exercises');
@@ -105,11 +105,11 @@ describe('AI Endpoints', () => {
                     created_at: new Date(),
                   },
                 ],
-                error: null
-              })
-            })
-          })
-        })
+                error: null,
+              }),
+            }),
+          }),
+        }),
       });
 
       const res = await request(app)
@@ -155,10 +155,10 @@ describe('AI Endpoints', () => {
                   created_at: new Date(),
                 },
               ],
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       const res = await request(app).get('/api/ai/foods');
@@ -190,11 +190,11 @@ describe('AI Endpoints', () => {
                     created_at: new Date(),
                   },
                 ],
-                error: null
-              })
-            })
-          })
-        })
+                error: null,
+              }),
+            }),
+          }),
+        }),
       });
 
       const res = await request(app)
