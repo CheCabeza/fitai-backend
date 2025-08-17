@@ -4,10 +4,7 @@ module.exports = {
     es2021: true,
     jest: true,
   },
-  extends: [
-    'eslint:recommended',
-    'prettier',
-  ],
+  extends: ['eslint:recommended', 'prettier'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2020,
@@ -31,7 +28,10 @@ module.exports = {
     'prefer-spread': 'error',
     'no-useless-return': 'error',
     'no-else-return': 'error',
-    'max-len': ['error', { code: 100, ignoreUrls: true, ignoreStrings: true, ignoreTemplateLiterals: true }],
+    'max-len': [
+      'error',
+      { code: 100, ignoreUrls: true, ignoreStrings: true, ignoreTemplateLiterals: true },
+    ],
   },
   ignorePatterns: ['node_modules/', 'coverage/', 'dist/'],
 };
