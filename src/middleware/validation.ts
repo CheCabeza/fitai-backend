@@ -17,23 +17,19 @@ export const handleValidationErrors = (req: Request, res: Response, next: NextFu
 
 // User registration validations
 export const validateRegistration = [
-  body('email')
-    .isEmail()
-    .withMessage('Email must be a valid email address')
-    .normalizeEmail(),
+  body('email').isEmail().withMessage('Email must be a valid email address').normalizeEmail(),
   body('password')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
+    .withMessage(
+      'Password must contain at least one lowercase letter, one uppercase letter, and one number'
+    ),
   body('name')
     .isLength({ min: 2, max: 50 })
     .withMessage('Name must be between 2 and 50 characters long')
     .trim(),
-  body('age')
-    .optional()
-    .isInt({ min: 13, max: 120 })
-    .withMessage('Age must be between 13 and 120'),
+  body('age').optional().isInt({ min: 13, max: 120 }).withMessage('Age must be between 13 and 120'),
   body('weight')
     .optional()
     .isFloat({ min: 30, max: 300 })
@@ -55,13 +51,8 @@ export const validateRegistration = [
 
 // User login validations
 export const validateLogin = [
-  body('email')
-    .isEmail()
-    .withMessage('Email must be a valid email address')
-    .normalizeEmail(),
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required'),
+  body('email').isEmail().withMessage('Email must be a valid email address').normalizeEmail(),
+  body('password').notEmpty().withMessage('Password is required'),
   handleValidationErrors,
 ];
 
@@ -72,10 +63,7 @@ export const validateProfileUpdate = [
     .isLength({ min: 2, max: 50 })
     .withMessage('Name must be between 2 and 50 characters long')
     .trim(),
-  body('age')
-    .optional()
-    .isInt({ min: 13, max: 120 })
-    .withMessage('Age must be between 13 and 120'),
+  body('age').optional().isInt({ min: 13, max: 120 }).withMessage('Age must be between 13 and 120'),
   body('weight')
     .optional()
     .isFloat({ min: 30, max: 300 })
@@ -102,7 +90,9 @@ export const validatePasswordChange = [
     .isLength({ min: 6 })
     .withMessage('New password must be at least 6 characters long')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('New password must contain at least one lowercase letter, one uppercase letter, and one number'),
+    .withMessage(
+      'New password must contain at least one lowercase letter, one uppercase letter, and one number'
+    ),
   handleValidationErrors,
 ];
 
@@ -159,7 +149,9 @@ export const validateWorkoutPlanGeneration = [
   body('focus')
     .optional()
     .isIn(['full_body', 'upper_body', 'lower_body', 'cardio', 'strength', 'flexibility'])
-    .withMessage('Focus must be one of: full_body, upper_body, lower_body, cardio, strength, flexibility'),
+    .withMessage(
+      'Focus must be one of: full_body, upper_body, lower_body, cardio, strength, flexibility'
+    ),
   body('duration')
     .optional()
     .isInt({ min: 15, max: 180 })
@@ -174,14 +166,8 @@ export const validateQueryParams = [
     .optional()
     .isInt({ min: 1, max: 100 })
     .withMessage('Limit must be between 1 and 100'),
-  query('startDate')
-    .optional()
-    .isISO8601()
-    .withMessage('Start date must be valid'),
-  query('endDate')
-    .optional()
-    .isISO8601()
-    .withMessage('End date must be valid'),
+  query('startDate').optional().isISO8601().withMessage('Start date must be valid'),
+  query('endDate').optional().isISO8601().withMessage('End date must be valid'),
   handleValidationErrors,
 ];
 

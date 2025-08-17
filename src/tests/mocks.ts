@@ -1,4 +1,3 @@
-
 // Mock data for tests
 export const mockUser = {
   id: 'test-user-id',

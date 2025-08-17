@@ -25,8 +25,6 @@ jest.mock('../config/supabase', () => {
   };
 });
 
-
-
 // Mock bcrypt for password hashing
 jest.mock('bcryptjs', () => ({
   hash: jest.fn().mockResolvedValue('$2b$10$hashedpassword'),

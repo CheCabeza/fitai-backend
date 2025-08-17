@@ -16,34 +16,34 @@ if (!process.env['DATABASE_URL']) {
 export const ENV_CONFIG = {
   // Environment
   NODE_ENV: process.env['NODE_ENV'] || 'development',
-  
+
   // Database
   DATABASE_URL: process.env['DATABASE_URL'] || '',
-  
+
   // JWT
   JWT_SECRET: process.env['JWT_SECRET'] || 'default-secret-key',
-  
+
   // URLs
   FRONTEND_URL: process.env['FRONTEND_URL'] || 'http://localhost:3000',
-  
+
   // OpenAI
   OPENAI_API_KEY: process.env['OPENAI_API_KEY'] || '',
-  
+
   // Port
   PORT: parseInt(process.env['PORT'] || '3001', 10),
-  
+
   // Supabase
   SUPABASE_URL: process.env['SUPABASE_URL'] || '',
   SUPABASE_ANON_KEY: process.env['SUPABASE_ANON_KEY'] || '',
   SUPABASE_SERVICE_ROLE_KEY: process.env['SUPABASE_SERVICE_ROLE_KEY'] || '',
-  
+
   // Logging
   LOG_LEVEL: process.env['LOG_LEVEL'] || 'info',
-  
+
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: parseInt(process.env['RATE_LIMIT_WINDOW_MS'] || '900000', 10),
   RATE_LIMIT_MAX_REQUESTS: parseInt(process.env['RATE_LIMIT_MAX_REQUESTS'] || '100', 10),
-  
+
   // Test
   TEST_TIMEOUT: parseInt(process.env['TEST_TIMEOUT'] || '10000', 10),
 };
@@ -52,21 +52,21 @@ export const ENV_CONFIG = {
 export const validateConfig = () => {
   const required = ['JWT_SECRET'];
   const missing = required.filter(key => !ENV_CONFIG[key as keyof typeof ENV_CONFIG]);
-  
+
   // Check if we have either DATABASE_URL or Supabase configuration
   const hasDatabaseUrl = !!ENV_CONFIG.DATABASE_URL;
   const hasSupabaseConfig = !!(ENV_CONFIG.SUPABASE_URL && ENV_CONFIG.SUPABASE_SERVICE_ROLE_KEY);
-  
+
   if (!hasDatabaseUrl && !hasSupabaseConfig) {
     throw new Error(
-      'Missing database configuration: Either DATABASE_URL or Supabase configuration (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY) is required',
+      'Missing database configuration: Either DATABASE_URL or Supabase configuration (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY) is required'
     );
   }
-  
+
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
   }
-  
+
   if (ENV_CONFIG.NODE_ENV === 'production' && !ENV_CONFIG.OPENAI_API_KEY) {
     console.warn('⚠️  Warning: OPENAI_API_KEY not set in production');
   }

@@ -117,12 +117,10 @@ describe('Auth Endpoints', () => {
         }),
       });
 
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: testUser.email,
-          password: testUser.password,
-        });
+      const res = await request(app).post('/api/auth/login').send({
+        email: testUser.email,
+        password: testUser.password,
+      });
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('message', 'Login successful');
@@ -142,12 +140,10 @@ describe('Auth Endpoints', () => {
         }),
       });
 
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: testUser.email,
-          password: 'wrongpassword',
-        });
+      const res = await request(app).post('/api/auth/login').send({
+        email: testUser.email,
+        password: 'wrongpassword',
+      });
 
       expect(res.status).toBe(401);
       expect(res.body).toHaveProperty('error', 'Invalid credentials');

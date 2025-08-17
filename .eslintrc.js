@@ -4,14 +4,18 @@ module.exports = {
     es2021: true,
     jest: true,
   },
-  extends: ['eslint:recommended'],
+  extends: [
+    'eslint:recommended',
+    'prettier',
+  ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
   },
-  plugins: ['@typescript-eslint'],
+  plugins: ['@typescript-eslint', 'prettier'],
   rules: {
+    'prettier/prettier': 'error',
     'no-console': 'warn',
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
@@ -27,11 +31,7 @@ module.exports = {
     'prefer-spread': 'error',
     'no-useless-return': 'error',
     'no-else-return': 'error',
-    'comma-dangle': ['error', 'always-multiline'],
-    semi: ['error', 'always'],
-    quotes: ['error', 'single', { avoidEscape: true }],
-    indent: ['error', 2],
-    'max-len': ['error', { code: 100, ignoreUrls: true }],
+    'max-len': ['error', { code: 100, ignoreUrls: true, ignoreStrings: true, ignoreTemplateLiterals: true }],
   },
   ignorePatterns: ['node_modules/', 'coverage/', 'dist/'],
 };

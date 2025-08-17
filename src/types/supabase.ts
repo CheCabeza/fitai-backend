@@ -12,7 +12,13 @@ export interface Database {
           gender: 'male' | 'female' | 'other' | null;
           height_cm: number | null;
           weight_kg: number | null;
-          activity_level: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active' | null;
+          activity_level:
+            | 'sedentary'
+            | 'lightly_active'
+            | 'moderately_active'
+            | 'very_active'
+            | 'extremely_active'
+            | null;
           fitness_goals: string[] | null;
           dietary_restrictions: string[] | null;
           created_at: string;
@@ -28,7 +34,13 @@ export interface Database {
           gender?: 'male' | 'female' | 'other' | null;
           height_cm?: number | null;
           weight_kg?: number | null;
-          activity_level?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active' | null;
+          activity_level?:
+            | 'sedentary'
+            | 'lightly_active'
+            | 'moderately_active'
+            | 'very_active'
+            | 'extremely_active'
+            | null;
           fitness_goals?: string[] | null;
           dietary_restrictions?: string[] | null;
           created_at?: string;
@@ -44,7 +56,13 @@ export interface Database {
           gender?: 'male' | 'female' | 'other' | null;
           height_cm?: number | null;
           weight_kg?: number | null;
-          activity_level?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active' | null;
+          activity_level?:
+            | 'sedentary'
+            | 'lightly_active'
+            | 'moderately_active'
+            | 'very_active'
+            | 'extremely_active'
+            | null;
           fitness_goals?: string[] | null;
           dietary_restrictions?: string[] | null;
           created_at?: string;
@@ -291,6 +309,9 @@ export interface Database {
   };
 }
 
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row'];
-export type Inserts<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert'];
-export type Updates<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update'];
+export type Tables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Row'];
+export type Inserts<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Insert'];
+export type Updates<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Update'];

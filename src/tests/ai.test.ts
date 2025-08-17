@@ -20,14 +20,13 @@ describe('AI Endpoints', () => {
       expect(res.body.data).toHaveProperty('recommendations');
       expect(res.body.data).toHaveProperty('userData');
       expect(res.body.data.recommendations).toHaveProperty('recommendations');
-      expect(Array.isArray(res.body.data.recommendations.recommendations)).toBe(
-        true,
-      );
+      expect(Array.isArray(res.body.data.recommendations.recommendations)).toBe(true);
     });
 
     it('should return recommendations with query parameters', async () => {
-      const res = await request(app)
-        .get('/api/ai/recommendations?goal=gain_muscle&activityLevel=moderate');
+      const res = await request(app).get(
+        '/api/ai/recommendations?goal=gain_muscle&activityLevel=moderate'
+      );
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('success', true);
@@ -112,8 +111,7 @@ describe('AI Endpoints', () => {
         }),
       });
 
-      const res = await request(app)
-        .get('/api/ai/exercises?category=strength');
+      const res = await request(app).get('/api/ai/exercises?category=strength');
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('success', true);
@@ -197,8 +195,7 @@ describe('AI Endpoints', () => {
         }),
       });
 
-      const res = await request(app)
-        .get('/api/ai/foods?category=protein');
+      const res = await request(app).get('/api/ai/foods?category=protein');
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('success', true);

@@ -56,7 +56,13 @@ interface WorkoutPlanRequest {
 /**
  * Generates a personalized meal plan
  */
-const generateMealPlan = async ({ user, date, preferences, restrictions, targetCalories }: MealPlanRequest): Promise<MealPlan> => {
+const generateMealPlan = async ({
+  user,
+  date,
+  preferences,
+  restrictions,
+  targetCalories,
+}: MealPlanRequest): Promise<MealPlan> => {
   try {
     if (openai) {
       // Use OpenAI to generate personalized plan
@@ -80,10 +86,10 @@ const generateMealPlan = async ({ user, date, preferences, restrictions, targetC
       - Target calories: ${targetCalories}
       - Restrictions: ${restrictions.join(', ') || 'None'}
       - Preferences: ${
-  Object.entries(preferences)
-    .map(([k, v]) => `${k}: ${v}`)
-    .join(', ') || 'None'
-}
+        Object.entries(preferences)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(', ') || 'None'
+      }
       
       Make sure the total calories are close to ${targetCalories} and that it's healthy and varied.`;
 
@@ -108,7 +114,13 @@ const generateMealPlan = async ({ user, date, preferences, restrictions, targetC
 /**
  * Generates a personalized workout plan
  */
-const generateWorkoutPlan = async ({ user, date, focus, duration, equipment }: WorkoutPlanRequest): Promise<WorkoutPlan> => {
+const generateWorkoutPlan = async ({
+  user,
+  date,
+  focus,
+  duration,
+  equipment,
+}: WorkoutPlanRequest): Promise<WorkoutPlan> => {
   try {
     if (openai) {
       // Use OpenAI to generate personalized plan
@@ -352,7 +364,10 @@ const generateBasicMealPlan = (_: MealPlanRequest): MealPlan => {
     ],
   };
 
-  const totalCalories = meals.breakfast.totalCalories + meals.lunch.totalCalories + meals.dinner.totalCalories +
+  const totalCalories =
+    meals.breakfast.totalCalories +
+    meals.lunch.totalCalories +
+    meals.dinner.totalCalories +
     meals.snacks.reduce((sum, snack) => sum + snack.calories, 0);
 
   return {
@@ -434,7 +449,9 @@ const generateBasicWorkoutPlan = (_: WorkoutPlanRequest): WorkoutPlan => {
 export {
   calculateEstimatedCalories,
   generateBasicMealPlan,
-  generateBasicWorkoutPlan, generateMealPlan,
-  generateWorkoutPlan, getBasicRecommendations, getFitnessRecommendations,
+  generateBasicWorkoutPlan,
+  generateMealPlan,
+  generateWorkoutPlan,
+  getBasicRecommendations,
+  getFitnessRecommendations,
 };
-

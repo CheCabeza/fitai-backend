@@ -2,4 +2,3 @@
 export const authController = {
   // Placeholder for future controller logic if needed
 };
-

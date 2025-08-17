@@ -9,7 +9,7 @@ export const getSupabase = (): SupabaseClient | null => {
   if (!supabaseClient) {
     const supabaseUrl = process.env['SUPABASE_URL'];
     const supabaseServiceKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
-    
+
     if (supabaseUrl && supabaseServiceKey) {
       supabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
         auth: {
@@ -27,7 +27,7 @@ export const getSupabaseAnon = (): SupabaseClient | null => {
   if (!supabaseAnonClient) {
     const supabaseUrl = process.env['SUPABASE_URL'];
     const supabaseAnonKey = process.env['SUPABASE_ANON_KEY'];
-    
+
     if (supabaseUrl && supabaseAnonKey) {
       supabaseAnonClient = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
@@ -48,7 +48,7 @@ export const supabaseAnon = getSupabaseAnon();
 export const validateSupabaseConfig = () => {
   const supabaseUrl = process.env['SUPABASE_URL'];
   const supabaseServiceKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
-  
+
   if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error('Missing Supabase environment variables');
   }
