@@ -10,21 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:14
-        env:
-          POSTGRES_PASSWORD: password
-          POSTGRES_USER: usuario
-          POSTGRES_DB: fitai_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
       - uses: actions/checkout@v4
 
@@ -37,22 +22,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma Client
-        run: npx prisma generate
-
-      - name: Setup test database
-        run: |
-          DATABASE_URL="postgresql://usuario:password@localhost:5432/fitai_test?schema=public" npx prisma db push
-          DATABASE_URL="postgresql://usuario:password@localhost:5432/fitai_test?schema=public" npm run db:seed
-        env:
-          DATABASE_URL: postgresql://usuario:password@localhost:5432/fitai_test?schema=public
-
       - name: Run tests
         run: npm test
         env:
-          DATABASE_URL: postgresql://usuario:password@localhost:5432/fitai_test?schema=public
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           JWT_SECRET: test-secret-key
           NODE_ENV: test
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - name: Run linting
         run: npm run lint || echo "Linting not configured yet"
