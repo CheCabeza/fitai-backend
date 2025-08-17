@@ -50,8 +50,16 @@ export const ENV_CONFIG = {
 
 // Validate required configuration
 export const validateConfig = () => {
-  const required = ['DATABASE_URL', 'JWT_SECRET'];
+  const required = ['JWT_SECRET'];
   const missing = required.filter(key => !ENV_CONFIG[key as keyof typeof ENV_CONFIG]);
+  
+  // Check if we have either DATABASE_URL or Supabase configuration
+  const hasDatabaseUrl = !!ENV_CONFIG.DATABASE_URL;
+  const hasSupabaseConfig = !!(ENV_CONFIG.SUPABASE_URL && ENV_CONFIG.SUPABASE_SERVICE_ROLE_KEY);
+  
+  if (!hasDatabaseUrl && !hasSupabaseConfig) {
+    throw new Error('Missing database configuration: Either DATABASE_URL or Supabase configuration (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY) is required');
+  }
   
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);

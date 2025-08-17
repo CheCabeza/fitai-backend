@@ -1,11 +1,10 @@
-import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import express, { Response } from 'express';
+import { getSupabase } from '../config/supabase';
 import { authenticateToken } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types';
 
 export const userRoutes = express.Router();
-const prisma = new PrismaClient();
 
 // Get user logs
 userRoutes.get('/logs', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -26,16 +25,35 @@ userRoutes.get('/logs', authenticateToken, async (req: AuthenticatedRequest, res
       if (endDate) where.date.lte = new Date(endDate as string);
     }
 
-    const logs = await prisma.user_logs.findMany({
-      where,
-      orderBy: { date: 'desc' },
-      take: parseInt(limit as string),
-      include: {
-        users: {
-          select: { name: true, email: true },
-        },
-      },
-    });
+    const supabase = getSupabase();
+    if (!supabase) {
+      res.status(500).json({ error: 'Database connection error' });
+      return;
+    }
+
+    let query = supabase.from('user_logs').select('*, users(first_name, last_name, email)').eq('user_id', req.user!.id);
+
+    if (type) {
+      query = query.eq('log_type', type);
+    }
+
+    if (startDate) {
+      query = query.gte('log_date', startDate as string);
+    }
+
+    if (endDate) {
+      query = query.lte('log_date', endDate as string);
+    }
+
+    const { data: logs, error: logsError } = await query
+      .order('log_date', { ascending: false })
+      .limit(parseInt(limit as string));
+
+    if (logsError) {
+      console.error('Error getting logs:', logsError);
+      res.status(500).json({ error: 'Error getting logs' });
+      return;
+    }
 
     res.json({ logs });
   } catch (error) {
@@ -52,23 +70,31 @@ userRoutes.post('/logs', authenticateToken, async (req: AuthenticatedRequest, re
       return;
     }
 
-    const { type, data, calories, date } = req.body;
+    const { type, data, date } = req.body;
 
-    const log = await prisma.user_logs.create({
-      data: {
+    const supabase = getSupabase();
+    if (!supabase) {
+      res.status(500).json({ error: 'Database connection error' });
+      return;
+    }
+
+    const { data: log, error: logError } = await supabase
+      .from('user_logs')
+      .insert({
         id: crypto.randomUUID(),
-        userId: req.user.id,
-        type,
+        user_id: req.user.id,
+        log_type: type,
         data,
-        calories: calories || null,
-        date: date ? new Date(date) : new Date(),
-      },
-      include: {
-        users: {
-          select: { name: true, email: true },
-        },
-      },
-    });
+        log_date: date ? new Date(date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      })
+      .select('*, users(first_name, last_name, email)')
+      .single();
+
+    if (logError) {
+      console.error('Error creating log:', logError);
+      res.status(500).json({ error: 'Error creating log' });
+      return;
+    }
 
     res.status(201).json({ log });
   } catch (error) {
@@ -92,11 +118,31 @@ userRoutes.get('/meal-plans', authenticateToken, async (req: AuthenticatedReques
       if (endDate) where.date.lte = new Date(endDate as string);
     }
 
-    const mealPlans = await prisma.meal_plans.findMany({
-      where,
-      orderBy: { date: 'desc' },
-      take: parseInt(limit as string),
-    });
+    const supabase = getSupabase();
+    if (!supabase) {
+      res.status(500).json({ error: 'Database connection error' });
+      return;
+    }
+
+    let query = supabase.from('meal_plans').select('*').eq('user_id', req.user!.id);
+
+    if (startDate) {
+      query = query.gte('date', startDate as string);
+    }
+
+    if (endDate) {
+      query = query.lte('date', endDate as string);
+    }
+
+    const { data: mealPlans, error: mealPlansError } = await query
+      .order('date', { ascending: false })
+      .limit(parseInt(limit as string));
+
+    if (mealPlansError) {
+      console.error('Error getting meal plans:', mealPlansError);
+      res.status(500).json({ error: 'Error getting meal plans' });
+      return;
+    }
 
     res.json({ mealPlans });
   } catch (error) {
@@ -120,11 +166,31 @@ userRoutes.get('/workout-plans', authenticateToken, async (req: AuthenticatedReq
       if (endDate) where.date.lte = new Date(endDate as string);
     }
 
-    const workoutPlans = await prisma.workout_plans.findMany({
-      where,
-      orderBy: { date: 'desc' },
-      take: parseInt(limit as string),
-    });
+    const supabase = getSupabase();
+    if (!supabase) {
+      res.status(500).json({ error: 'Database connection error' });
+      return;
+    }
+
+    let query = supabase.from('workout_plans').select('*').eq('user_id', req.user!.id);
+
+    if (startDate) {
+      query = query.gte('date', startDate as string);
+    }
+
+    if (endDate) {
+      query = query.lte('date', endDate as string);
+    }
+
+    const { data: workoutPlans, error: workoutPlansError } = await query
+      .order('date', { ascending: false })
+      .limit(parseInt(limit as string));
+
+    if (workoutPlansError) {
+      console.error('Error getting workout plans:', workoutPlansError);
+      res.status(500).json({ error: 'Error getting workout plans' });
+      return;
+    }
 
     res.json({ workoutPlans });
   } catch (error) {
@@ -148,11 +214,38 @@ userRoutes.get('/statistics', authenticateToken, async (req: AuthenticatedReques
       if (endDate) where.date.lte = new Date(endDate as string);
     }
 
-    const [totalLogs, totalMealPlans, totalWorkoutPlans] = await Promise.all([
-      prisma.user_logs.count({ where }),
-      prisma.meal_plans.count({ where }),
-      prisma.workout_plans.count({ where }),
+    const supabase = getSupabase();
+    if (!supabase) {
+      res.status(500).json({ error: 'Database connection error' });
+      return;
+    }
+
+    // Build query filters for each table
+    let logsQuery = supabase.from('user_logs').select('*', { count: 'exact', head: true }).eq('user_id', req.user!.id);
+    let mealPlansQuery = supabase.from('meal_plans').select('*', { count: 'exact', head: true }).eq('user_id', req.user!.id);
+    let workoutPlansQuery = supabase.from('workout_plans').select('*', { count: 'exact', head: true }).eq('user_id', req.user!.id);
+
+    if (startDate) {
+      logsQuery = logsQuery.gte('log_date', startDate as string);
+      mealPlansQuery = mealPlansQuery.gte('date', startDate as string);
+      workoutPlansQuery = workoutPlansQuery.gte('date', startDate as string);
+    }
+
+    if (endDate) {
+      logsQuery = logsQuery.lte('log_date', endDate as string);
+      mealPlansQuery = mealPlansQuery.lte('date', endDate as string);
+      workoutPlansQuery = workoutPlansQuery.lte('date', endDate as string);
+    }
+
+    const [logsResult, mealPlansResult, workoutPlansResult] = await Promise.all([
+      logsQuery,
+      mealPlansQuery,
+      workoutPlansQuery,
     ]);
+
+    const totalLogs = logsResult.count || 0;
+    const totalMealPlans = mealPlansResult.count || 0;
+    const totalWorkoutPlans = workoutPlansResult.count || 0;
 
     res.json({
       statistics: {

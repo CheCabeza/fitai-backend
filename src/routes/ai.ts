@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import express from 'express';
+import { getSupabase } from '../config/supabase';
 import { authenticateToken, optionalAuth } from '../middleware/auth';
 import { ApiResponseExpress, AuthenticatedRequest } from '../types';
 import {
@@ -10,7 +10,6 @@ import {
 } from '../utils/ai';
 
 export const aiRoutes = express.Router();
-const prisma = new PrismaClient();
 
 // Generate personalized meal plan
 aiRoutes.post('/generate-meal-plan', authenticateToken, async (req: AuthenticatedRequest, res: ApiResponseExpress): Promise<void> => {
@@ -28,17 +27,32 @@ aiRoutes.post('/generate-meal-plan', authenticateToken, async (req: Authenticate
     }
 
     // Get user data for personalization
-    const user = await prisma.users.findUnique({
-      where: { id: req.user.id },
-      select: {
-        age: true,
-        weight: true,
-        height: true,
-        goal: true,
-        activityLevel: true,
-        restrictions: true,
-      },
-    });
+    const supabase = getSupabase();
+    if (!supabase) {
+      res.status(500).json({ success: false, error: 'Database connection error' });
+      return;
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('date_of_birth, weight_kg, height_cm, fitness_goals, activity_level, dietary_restrictions')
+      .eq('id', req.user.id)
+      .single();
+
+    if (userError || !userData) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    // Convert Supabase data to expected format
+    const user = {
+      age: userData.date_of_birth ? new Date().getFullYear() - new Date(userData.date_of_birth).getFullYear() : 25,
+      weight: userData.weight_kg,
+      height: userData.height_cm,
+      goal: userData.fitness_goals?.[0] || 'maintain',
+      activityLevel: userData.activity_level,
+      restrictions: userData.dietary_restrictions || [],
+    };
 
     // Generate meal plan using AI
     const mealPlan = await generateMealPlan({
@@ -50,15 +64,23 @@ aiRoutes.post('/generate-meal-plan', authenticateToken, async (req: Authenticate
     });
 
     // Save to database
-    const savedMealPlan = await prisma.meal_plans.create({
-      data: {
+    const { data: savedMealPlan, error: saveError } = await supabase
+      .from('meal_plans')
+      .insert({
         id: crypto.randomUUID(),
-        userId: req.user.id,
-        date: new Date(date),
-        meals: JSON.stringify(mealPlan.meals),
-        totalCalories: mealPlan.totalCalories,
-      },
-    });
+        user_id: req.user.id,
+        date: new Date(date).toISOString().split('T')[0],
+        meals: mealPlan.meals,
+        total_calories: mealPlan.totalCalories,
+      })
+      .select()
+      .single();
+
+    if (saveError) {
+      console.error('Error saving meal plan:', saveError);
+      res.status(500).json({ success: false, error: 'Error saving meal plan' });
+      return;
+    }
 
     res.json({
       success: true,
@@ -91,16 +113,31 @@ aiRoutes.post('/generate-workout-plan', authenticateToken, async (req: Authentic
     }
 
     // Get user data for personalization
-    const user = await prisma.users.findUnique({
-      where: { id: req.user.id },
-      select: {
-        age: true,
-        weight: true,
-        height: true,
-        goal: true,
-        activityLevel: true,
-      },
-    });
+    const supabase = getSupabase();
+    if (!supabase) {
+      res.status(500).json({ success: false, error: 'Database connection error' });
+      return;
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('date_of_birth, weight_kg, height_cm, fitness_goals, activity_level')
+      .eq('id', req.user.id)
+      .single();
+
+    if (userError || !userData) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    // Convert Supabase data to expected format
+    const user = {
+      age: userData.date_of_birth ? new Date().getFullYear() - new Date(userData.date_of_birth).getFullYear() : 25,
+      weight: userData.weight_kg,
+      height: userData.height_cm,
+      goal: userData.fitness_goals?.[0] || 'maintain',
+      activityLevel: userData.activity_level,
+    };
 
     // Generate workout plan using AI
     const workoutPlan = await generateWorkoutPlan({
@@ -112,15 +149,23 @@ aiRoutes.post('/generate-workout-plan', authenticateToken, async (req: Authentic
     });
 
     // Save to database
-    const savedWorkoutPlan = await prisma.workout_plans.create({
-      data: {
+    const { data: savedWorkoutPlan, error: saveError } = await supabase
+      .from('workout_plans')
+      .insert({
         id: crypto.randomUUID(),
-        userId: req.user.id,
-        date: new Date(date),
-        exercises: JSON.stringify(workoutPlan.exercises),
+        user_id: req.user.id,
+        date: new Date(date).toISOString().split('T')[0],
+        exercises: workoutPlan.exercises,
         duration: workoutPlan.duration || null,
-      },
-    });
+      })
+      .select()
+      .single();
+
+    if (saveError) {
+      console.error('Error saving workout plan:', saveError);
+      res.status(500).json({ success: false, error: 'Error saving workout plan' });
+      return;
+    }
 
     res.json({
       success: true,
@@ -146,17 +191,24 @@ aiRoutes.get('/recommendations', optionalAuth, async (req: AuthenticatedRequest,
 
     if (req.user?.id) {
       // If user is authenticated, use their data
-      const user = await prisma.users.findUnique({
-        where: { id: req.user.id },
-        select: {
-          age: true,
-          weight: true,
-          height: true,
-          goal: true,
-          activityLevel: true,
-        },
-      });
-      userData = user;
+      const supabase = getSupabase();
+      if (supabase) {
+        const { data: userDataFromDB, error: userError } = await supabase
+          .from('users')
+          .select('date_of_birth, weight_kg, height_cm, fitness_goals, activity_level')
+          .eq('id', req.user.id)
+          .single();
+
+        if (!userError && userDataFromDB) {
+          userData = {
+            age: userDataFromDB.date_of_birth ? new Date().getFullYear() - new Date(userDataFromDB.date_of_birth).getFullYear() : 25,
+            weight: userDataFromDB.weight_kg,
+            height: userDataFromDB.height_cm,
+            goal: userDataFromDB.fitness_goals?.[0] || 'fitness',
+            activityLevel: userDataFromDB.activity_level,
+          };
+        }
+      }
     } else {
       // If no user, use query params data
       userData = {
@@ -203,22 +255,54 @@ aiRoutes.get('/progress-analysis', authenticateToken, async (req: AuthenticatedR
       if (endDate) where.date.lte = new Date(endDate as string);
     }
 
+    const supabase = getSupabase();
+    if (!supabase) {
+      res.status(500).json({ success: false, error: 'Database connection error' });
+      return;
+    }
+
+    // Build query filters
+    let query = supabase.from('user_logs').select('*').eq('user_id', req.user.id);
+    if (startDate) {
+      query = query.gte('log_date', startDate as string);
+    }
+    if (endDate) {
+      query = query.lte('log_date', endDate as string);
+    }
+
     // Get logs from the period
-    const logs = await prisma.user_logs.findMany({
-      where,
-      orderBy: { date: 'asc' },
-    });
+    const { data: logs, error: logsError } = await query.order('log_date', { ascending: true });
+
+    if (logsError) {
+      console.error('Error fetching logs:', logsError);
+      res.status(500).json({ success: false, error: 'Error fetching logs' });
+      return;
+    }
 
     // Get meal and workout plans
-    const mealPlans = await prisma.meal_plans.findMany({
-      where,
-      orderBy: { date: 'asc' },
-    });
+    let mealPlansQuery = supabase.from('meal_plans').select('*').eq('user_id', req.user.id);
+    if (startDate) {
+      mealPlansQuery = mealPlansQuery.gte('date', startDate as string);
+    }
+    if (endDate) {
+      mealPlansQuery = mealPlansQuery.lte('date', endDate as string);
+    }
+    const { data: mealPlans, error: mealPlansError } = await mealPlansQuery.order('date', { ascending: true });
 
-    const workoutPlans = await prisma.workout_plans.findMany({
-      where,
-      orderBy: { date: 'asc' },
-    });
+    let workoutPlansQuery = supabase.from('workout_plans').select('*').eq('user_id', req.user.id);
+    if (startDate) {
+      workoutPlansQuery = workoutPlansQuery.gte('date', startDate as string);
+    }
+    if (endDate) {
+      workoutPlansQuery = workoutPlansQuery.lte('date', endDate as string);
+    }
+    const { data: workoutPlans, error: workoutPlansError } = await workoutPlansQuery.order('date', { ascending: true });
+
+    if (mealPlansError || workoutPlansError) {
+      console.error('Error fetching plans:', { mealPlansError, workoutPlansError });
+      res.status(500).json({ success: false, error: 'Error fetching plans' });
+      return;
+    }
 
     // Analyze progress
     const analysis: any = {
@@ -321,11 +405,29 @@ aiRoutes.get('/exercises', optionalAuth, async (req: AuthenticatedRequest, res: 
       ];
     }
 
-    const exercises = await prisma.exercises.findMany({
-      where,
-      take: 50,
-      orderBy: { name: 'asc' },
-    });
+    const supabase = getSupabase();
+    if (!supabase) {
+      res.status(500).json({ success: false, error: 'Database connection error' });
+      return;
+    }
+
+    let query = supabase.from('exercises').select('*').limit(50).order('name', { ascending: true });
+
+    if (category) query = query.eq('category', category);
+    if (muscleGroup) query = query.eq('muscle_group', muscleGroup);
+    if (equipment) query = query.eq('equipment', equipment);
+    if (difficulty) query = query.eq('difficulty_level', difficulty);
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+    }
+
+    const { data: exercises, error: exercisesError } = await query;
+
+    if (exercisesError) {
+      console.error('Error searching exercises:', exercisesError);
+      res.status(500).json({ success: false, error: 'Error searching exercises' });
+      return;
+    }
 
     res.json({ success: true, data: { exercises } });
   } catch (error) {
@@ -351,11 +453,32 @@ aiRoutes.get('/foods', optionalAuth, async (req: AuthenticatedRequest, res: ApiR
       if (maxCalories) where.calories.lte = parseFloat(maxCalories as string);
     }
 
-    const foods = await prisma.food_items.findMany({
-      where,
-      take: 50,
-      orderBy: { name: 'asc' },
-    });
+    const supabase = getSupabase();
+    if (!supabase) {
+      res.status(500).json({ success: false, error: 'Database connection error' });
+      return;
+    }
+
+    let query = supabase.from('foods').select('*').limit(50).order('name', { ascending: true });
+
+    if (category) query = query.eq('category', category);
+    if (search) {
+      query = query.ilike('name', `%${search}%`);
+    }
+    if (minCalories) {
+      query = query.gte('calories_per_100g', parseFloat(minCalories as string));
+    }
+    if (maxCalories) {
+      query = query.lte('calories_per_100g', parseFloat(maxCalories as string));
+    }
+
+    const { data: foods, error: foodsError } = await query;
+
+    if (foodsError) {
+      console.error('Error searching foods:', foodsError);
+      res.status(500).json({ success: false, error: 'Error searching foods' });
+      return;
+    }
 
     res.json({ success: true, data: { foods } });
   } catch (error) {

@@ -190,7 +190,11 @@ const getFitnessRecommendations = async (userData: any): Promise<FitnessRecommen
       const aiRecommendations = JSON.parse(response);
 
       return {
-        recommendations: aiRecommendations.recommendations,
+        general: aiRecommendations.recommendations || [],
+        nutrition: [],
+        exercise: [],
+        lifestyle: [],
+        recommendations: aiRecommendations.recommendations || [],
         goal: aiRecommendations.goal,
         activityLevel: aiRecommendations.activityLevel,
         estimatedCalories: aiRecommendations.estimatedCalories || 2000,
@@ -218,6 +222,10 @@ const getBasicRecommendations = (userData: any): FitnessRecommendations => {
   ];
 
   return {
+    general: recommendations,
+    nutrition: [],
+    exercise: [],
+    lifestyle: [],
     recommendations,
     goal: goal || 'fitness',
     activityLevel: activityLevel || 'moderate',
@@ -424,9 +432,9 @@ const generateBasicWorkoutPlan = (_: WorkoutPlanRequest): WorkoutPlan => {
 };
 
 export {
-    calculateEstimatedCalories,
-    generateBasicMealPlan,
-    generateBasicWorkoutPlan, generateMealPlan,
-    generateWorkoutPlan, getBasicRecommendations, getFitnessRecommendations
+  calculateEstimatedCalories,
+  generateBasicMealPlan,
+  generateBasicWorkoutPlan, generateMealPlan,
+  generateWorkoutPlan, getBasicRecommendations, getFitnessRecommendations
 };
 

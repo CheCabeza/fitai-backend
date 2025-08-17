@@ -1,91 +1,31 @@
-import { users } from '@prisma/client';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 
-// Extend the Prisma types with additional properties
-export interface AuthenticatedUser extends users {
-  // Add any additional properties needed for authenticated users
-}
-
-// Request with user property
+// Global interfaces for the application
 export interface AuthenticatedRequest extends Request {
-  user?: AuthenticatedUser;
+  user?: {
+    userId: string;
+    id: string;
+    email: string;
+  };
 }
 
-// JWT payload interface
+export interface ApiResponseExpress {
+  status: (code: number) => ApiResponseExpress;
+  json: (data: any) => void;
+}
+
 export interface JWTPayload {
   userId: string;
   email: string;
-  iat?: number;
-  exp?: number;
+  iat: number;
+  exp: number;
 }
 
-// AI response interface
-export interface AIResponse {
-  success: boolean;
-  data: any;
-  message?: string;
+export interface UserLoginData {
+  email: string;
+  password: string;
 }
 
-// Exercise interface
-export interface Exercise {
-  id: string;
-  name: string;
-  category: string;
-  muscleGroup: string;
-  equipment: string;
-  difficulty: string;
-  caloriesPerMin?: number;
-  description?: string;
-  instructions: string[];
-}
-
-// Food item interface
-export interface FoodItem {
-  id: string;
-  name: string;
-  category?: string;
-  calories: number;
-  protein?: number;
-  carbs?: number;
-  fat?: number;
-  fiber?: number;
-}
-
-// Meal plan interface (for AI generation)
-export interface MealPlan {
-  meals: any;
-  totalCalories: number;
-  recommendations?: string[];
-}
-
-// Workout plan interface (for AI generation)
-export interface WorkoutPlan {
-  exercises: any;
-  duration: number;
-  focus?: string;
-  difficulty?: string;
-  recommendations?: string[];
-}
-
-// User log interface
-export interface UserLog {
-  id: string;
-  userId: string;
-  date: Date;
-  type: string;
-  data: any;
-  calories?: number;
-}
-
-// Fitness recommendations interface
-export interface FitnessRecommendations {
-  recommendations: string[];
-  goal?: string;
-  activityLevel?: string;
-  estimatedCalories?: number;
-}
-
-// User registration data
 export interface UserRegistrationData {
   email: string;
   password: string;
@@ -98,13 +38,6 @@ export interface UserRegistrationData {
   restrictions?: string[];
 }
 
-// User login data
-export interface UserLoginData {
-  email: string;
-  password: string;
-}
-
-// User profile update data
 export interface UserProfileUpdateData {
   name?: string;
   age?: number;
@@ -115,88 +48,49 @@ export interface UserProfileUpdateData {
   restrictions?: string[];
 }
 
-// Password change data
 export interface PasswordChangeData {
   currentPassword: string;
   newPassword: string;
 }
 
-// API response type
-export type ApiResponseExpress = Response;
-
-// API Response types
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
-  details?: any[];
+export interface FitnessRecommendations {
+  general: string[];
+  nutrition: string[];
+  exercise: string[];
+  lifestyle: string[];
+  recommendations: string[];
+  goal?: string;
+  activityLevel?: string;
+  estimatedCalories?: number;
 }
 
-export interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
+export interface MealPlan {
+  meals: {
+    breakfast: any;
+    lunch: any;
+    dinner: any;
+    snacks: any;
   };
+  totalCalories: number;
+  recommendations: string[];
 }
 
-// Environment variables
-export interface EnvironmentVariables {
-  NODE_ENV: 'development' | 'production' | 'test';
-  PORT: number;
-  DATABASE_URL: string;
-  JWT_SECRET: string;
-  FRONTEND_URL: string;
-  OPENAI_API_KEY?: string;
-  REDIS_URL?: string;
-  RATE_LIMIT_WINDOW_MS?: number;
-  RATE_LIMIT_MAX_REQUESTS?: number;
+export interface WorkoutPlan {
+  exercises: any[];
+  duration: number;
+  focus: string;
+  difficulty: string;
+  recommendations: string[];
 }
 
-// Validation error
-export interface ValidationError {
-  field: string;
-  message: string;
-  value: any;
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  age?: number;
+  weight?: number;
+  height?: number;
+  goal?: string;
+  activityLevel?: string;
+  restrictions?: string[];
 }
-
-// Constants
-export const FITNESS_GOALS = {
-  LOSE_WEIGHT: 'lose_weight',
-  GAIN_MUSCLE: 'gain_muscle',
-  MAINTAIN: 'maintain',
-  FITNESS: 'fitness',
-} as const;
-
-export const ACTIVITY_LEVELS = {
-  SEDENTARY: 'sedentary',
-  LIGHT: 'light',
-  MODERATE: 'moderate',
-  VERY: 'very',
-  EXTREME: 'extreme',
-} as const;
-
-export const LOG_TYPES = {
-  FOOD: 'food',
-  EXERCISE: 'exercise',
-  WEIGHT: 'weight',
-  MEASUREMENT: 'measurement',
-} as const;
-
-export const EXERCISE_CATEGORIES = {
-  STRENGTH: 'strength',
-  CARDIO: 'cardio',
-  FLEXIBILITY: 'flexibility',
-  SPORTS: 'sports',
-} as const;
-
-export const WORKOUT_FOCUS = {
-  FULL_BODY: 'full_body',
-  UPPER_BODY: 'upper_body',
-  LOWER_BODY: 'lower_body',
-  CARDIO: 'cardio',
-  STRENGTH: 'strength',
-  FLEXIBILITY: 'flexibility',
-} as const;

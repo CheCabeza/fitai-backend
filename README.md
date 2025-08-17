@@ -5,7 +5,7 @@ Backend API for fitness and nutrition application with personalized artificial i
 ## 🚀 Features
 
 - **Secure JWT Authentication**
-- **PostgreSQL database** with Prisma ORM
+- **Supabase database** with PostgreSQL
 - **Personalized plan generation** with AI (OpenAI)
 - **Logging system** for progress tracking
 - **Intelligent recommendations** based on user profile
@@ -17,12 +17,12 @@ Backend API for fitness and nutrition application with personalized artificial i
 ## 📋 Requirements
 
 - Node.js 18+
-- PostgreSQL 14+ (or Supabase cloud database)
+- Supabase account (free tier available)
 - npm or yarn
 
 ## 🛠️ Installation
 
-### Option 1: Local PostgreSQL
+## 🛠️ Installation
 
 1. **Clone the repository**
 
@@ -40,14 +40,16 @@ npm install
 3. **Configure environment variables**
 
 ```bash
-cp .env.example .env
+cp env.development.example .env.development
 ```
 
-Edit `.env` with your configurations:
+Edit `.env.development` with your configurations:
 
 ```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/fitai_db?schema=public"
+# Supabase Configuration
+SUPABASE_URL="https://your-project.supabase.co"
+SUPABASE_ANON_KEY="your-anon-key"
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 
 # JWT Secret (generate a secure one for production)
 JWT_SECRET="your_super_secure_jwt_secret_here_2024"
@@ -65,15 +67,12 @@ NODE_ENV="development"
 PORT=3001
 ```
 
-4. **Configure database**
+4. **Setup Supabase Database**
 
-```bash
-# Generate Prisma Client
-npm run db:generate
-
-# Apply schema to database
-npm run db:push
-```
+Follow the instructions in [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) to:
+- Create a Supabase project
+- Set up the database schema
+- Insert sample data
 
 5. **Start server**
 
@@ -84,8 +83,6 @@ npm run dev
 # Production
 npm start
 ```
-
-### Option 2: Supabase (Recommended) 🚀
 
 1. **Clone and install**
 

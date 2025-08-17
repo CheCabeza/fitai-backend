@@ -1,9 +1,9 @@
-import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
 import app from '../app';
+import { getSupabase } from '../config/supabase';
 
-// Get the mocked Prisma client
-const mockPrisma = new PrismaClient() as jest.Mocked<PrismaClient>;
+// Get the mocked Supabase client
+const mockSupabase = getSupabase() as jest.Mocked<any>;
 
 describe('Auth Endpoints', () => {
   const testUser = {
@@ -26,22 +26,35 @@ describe('Auth Endpoints', () => {
 
   describe('POST /api/auth/register', () => {
     it('should register a new user successfully', async () => {
-      // Mock findUnique to return null (user doesn't exist)
-      (mockPrisma.users.findUnique as jest.Mock).mockResolvedValueOnce(null);
-      
-      // Mock create to return a new user
-      (mockPrisma.users.create as jest.Mock).mockResolvedValueOnce({
-        id: 'new-user-id',
-        email: testUser.email,
-        name: testUser.name,
-        age: testUser.age,
-        weight: testUser.weight,
-        height: testUser.height,
-        goal: testUser.goal,
-        activityLevel: testUser.activityLevel,
-        restrictions: testUser.restrictions,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+      // Mock Supabase responses
+      mockSupabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: null, error: null })
+          })
+        }),
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: {
+                id: 'new-user-id',
+                email: testUser.email,
+                first_name: 'Test',
+                last_name: 'User',
+                date_of_birth: '1990-01-01',
+                gender: 'male',
+                height_cm: 175,
+                weight_kg: 70,
+                activity_level: 'moderately_active',
+                fitness_goals: ['lose weight'],
+                dietary_restrictions: [],
+                created_at: new Date(),
+                updated_at: new Date(),
+              },
+              error: null
+            })
+          })
+        })
       });
 
       const res = await request(app).post('/api/auth/register').send(testUser);
@@ -55,30 +68,63 @@ describe('Auth Endpoints', () => {
     it('should fail with invalid email', async () => {
       const invalidUser = { ...testUser, email: 'invalid-email' };
 
-      const res = await request(app).post('/api/auth/register').send(invalidUser).expect(400);
+      const res = await request(app).post('/api/auth/register').send(invalidUser);
 
+      expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('error');
     });
 
     it('should fail with short password', async () => {
       const invalidUser = { ...testUser, password: '123' };
 
-      const res = await request(app).post('/api/auth/register').send(invalidUser).expect(400);
+      const res = await request(app).post('/api/auth/register').send(invalidUser);
 
+      expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('error');
     });
   });
 
   describe('POST /api/auth/login', () => {
     it('should login successfully with valid credentials', async () => {
+      // Mock bcrypt for password comparison
+      const bcrypt = require('bcryptjs');
+      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
+
+      // Mock Supabase responses for login
+      mockSupabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: {
+                id: 'test-user-id',
+                email: testUser.email,
+                password_hash: '$2b$10$hashedpassword',
+                first_name: 'Test',
+                last_name: 'User',
+                date_of_birth: '1990-01-01',
+                gender: 'male',
+                height_cm: 175,
+                weight_kg: 70,
+                activity_level: 'moderately_active',
+                fitness_goals: ['lose weight'],
+                dietary_restrictions: [],
+                created_at: new Date(),
+                updated_at: new Date(),
+              },
+              error: null
+            })
+          })
+        })
+      });
+
       const res = await request(app)
         .post('/api/auth/login')
         .send({
           email: testUser.email,
           password: testUser.password,
-        })
-        .expect(200);
+        });
 
+      expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('message', 'Login successful');
       expect(res.body).toHaveProperty('user');
       expect(res.body).toHaveProperty('token');
@@ -87,9 +133,14 @@ describe('Auth Endpoints', () => {
     });
 
     it('should fail with invalid credentials', async () => {
-      // Mock bcrypt.compare to return false for invalid password
-      const bcrypt = require('bcryptjs');
-      (bcrypt.compare as jest.Mock).mockResolvedValueOnce(false);
+      // Mock Supabase to return no user
+      mockSupabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: null, error: null })
+          })
+        })
+      });
 
       const res = await request(app)
         .post('/api/auth/login')
@@ -105,18 +156,45 @@ describe('Auth Endpoints', () => {
 
   describe('GET /api/auth/profile', () => {
     it('should get user profile with valid token', async () => {
+      // Mock Supabase responses for profile
+      mockSupabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: {
+                id: 'test-user-id',
+                email: testUser.email,
+                first_name: 'Test',
+                last_name: 'User',
+                date_of_birth: '1990-01-01',
+                gender: 'male',
+                height_cm: 175,
+                weight_kg: 70,
+                activity_level: 'moderately_active',
+                fitness_goals: ['lose weight'],
+                dietary_restrictions: [],
+                created_at: new Date(),
+                updated_at: new Date(),
+              },
+              error: null
+            })
+          })
+        })
+      });
+
       const res = await request(app)
         .get('/api/auth/profile')
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
+        .set('Authorization', `Bearer ${authToken}`);
 
+      expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('user');
       expect(res.body.user.email).toBe(testUser.email);
     });
 
-    it('should fail without token', async () => {
-      const res = await request(app).get('/api/auth/profile').expect(401);
+    it('should fail without valid token', async () => {
+      const res = await request(app).get('/api/auth/profile');
 
+      expect(res.status).toBe(401);
       expect(res.body).toHaveProperty('error', 'Access token required');
     });
   });

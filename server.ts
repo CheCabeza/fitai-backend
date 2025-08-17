@@ -28,7 +28,9 @@ app.listen(PORT, () => {
   }
   
   // Database information
-  if (config.DATABASE_URL.includes('supabase')) {
+  if (config.SUPABASE_URL && config.SUPABASE_SERVICE_ROLE_KEY) {
+    console.log(`🗄️  Database: Supabase`);
+  } else if (config.DATABASE_URL && config.DATABASE_URL.includes('supabase')) {
     console.log(`🗄️  Database: Supabase`);
   } else {
     console.log(`🗄️  Database: Local PostgreSQL`);

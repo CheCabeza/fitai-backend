@@ -1,9 +1,22 @@
-import { PrismaClient } from '@prisma/client';
-import { NextFunction, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { AuthenticatedRequest, JWTPayload } from '../types';
+import { getSupabase } from '../config/supabase';
 
-const prisma = new PrismaClient();
+// Local interfaces for this file
+interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: string;
+    id: string;
+    email: string;
+  };
+}
+
+interface JWTPayload {
+  userId: string;
+  email: string;
+  iat: number;
+  exp: number;
+}
 
 // Middleware to verify JWT token
 export const authenticateToken = async (
@@ -22,17 +35,29 @@ export const authenticateToken = async (
 
     const decoded = jwt.verify(token, process.env['JWT_SECRET']!) as JWTPayload;
 
+    const supabase = getSupabase();
+    if (!supabase) {
+      res.status(500).json({ error: 'Database not configured' });
+      return;
+    }
+
     // Verify user exists in database
-    const user = await prisma.users.findUnique({
-      where: { id: decoded.userId },
-    });
+    const { data: user } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('id', decoded.userId)
+      .single();
 
     if (!user) {
       res.status(401).json({ error: 'User not found' });
       return;
     }
 
-    req.user = user;
+    req.user = {
+      userId: user.id,
+      id: user.id,
+      email: user.email
+    };
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
@@ -61,11 +86,20 @@ export const optionalAuth = async (
 
     if (token) {
       const decoded = jwt.verify(token, process.env['JWT_SECRET']!) as JWTPayload;
-      const user = await prisma.users.findUnique({
-        where: { id: decoded.userId },
-      });
-      if (user) {
-        req.user = user;
+      const supabase = getSupabase();
+      if (supabase) {
+        const { data: user } = await supabase
+          .from('users')
+          .select('id, email')
+          .eq('id', decoded.userId)
+          .single();
+        if (user) {
+          req.user = {
+            userId: user.id,
+            id: user.id,
+            email: user.email
+          };
+        }
       }
     }
     next();
