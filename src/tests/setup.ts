@@ -58,10 +58,11 @@ jest.mock('openai', () => {
     },
   }));
 
-  return {
-    default: mockOpenAI,
-    OpenAI: mockOpenAI,
-  };
+  // Export as default for ES6 imports
+  const OpenAI = mockOpenAI as any;
+  OpenAI.default = mockOpenAI;
+  
+  return OpenAI;
 });
 
 // Global test timeout
