@@ -21,17 +21,20 @@ A Node.js/Express backend for the FitAI fitness application, built with TypeScri
 ## 🛠️ Installation
 
 1. **Clone the repository:**
+
    ```bash
    git clone <repository-url>
    cd fitai-backend
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables:**
+
    ```bash
    cp env.development.example .env.development
    cp env.test.example .env.test
@@ -73,21 +76,25 @@ OPENAI_API_KEY=your-openai-api-key
 ## 🚀 Development
 
 ### Start development server:
+
 ```bash
 npm run dev
 ```
 
 ### Run tests:
+
 ```bash
 npm test
 ```
 
 ### Build for production:
+
 ```bash
 npm run build
 ```
 
 ### Start production server:
+
 ```bash
 npm start
 ```
@@ -121,16 +128,19 @@ npm start
 ## 🧪 Testing
 
 ### Run all tests:
+
 ```bash
 npm test
 ```
 
 ### Run tests in watch mode:
+
 ```bash
 npm run test:watch
 ```
 
 ### Run tests with coverage:
+
 ```bash
 npm run test:coverage
 ```
@@ -187,6 +197,7 @@ This project is licensed under the MIT License.
 ## 🆘 Support
 
 For support and questions:
+
 - Check the documentation
 - Open an issue on GitHub
 - Contact the development team

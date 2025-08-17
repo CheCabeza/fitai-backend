@@ -226,12 +226,14 @@ INSERT INTO foods (name, description, calories_per_100g, protein_g, carbs_g, fat
 ## 🔧 Testing Your Setup
 
 1. **Test connection:**
+
    ```bash
    npm run dev
    curl http://localhost:3001/api/health
    ```
 
 2. **Test authentication:**
+
    ```bash
    curl -X POST http://localhost:3001/api/auth/register \
      -H "Content-Type: application/json" \
