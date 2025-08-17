@@ -36,8 +36,8 @@ A Node.js/Express backend for the FitAI fitness application, built with TypeScri
 3. **Set up environment variables:**
 
    ```bash
-   cp env.development.example .env.development
-   cp env.test.example .env.test
+   cp env.example .env.development
+   cp env.example .env.test
    ```
 
 4. **Configure your environment files:**

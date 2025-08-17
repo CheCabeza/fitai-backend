@@ -14,14 +14,14 @@ npm install
 
 echo -e "${BLUE}📋 Creating environment files...${NC}"
 if [ ! -f .env.development ]; then
-  cp env.development.example .env.development
+  cp .env.example .env.development
   echo -e "${GREEN}✅ Created .env.development${NC}"
 else
   echo -e "${YELLOW}⚠️  .env.development already exists${NC}"
 fi
 
 if [ ! -f .env.test ]; then
-  cp env.test.example .env.test
+  cp .env.example .env.test
   echo -e "${GREEN}✅ Created .env.test${NC}"
 else
   echo -e "${YELLOW}⚠️  .env.test already exists${NC}"
