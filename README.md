@@ -181,6 +181,50 @@ For production deployment:
 2. Configure all required environment variables
 3. Use a process manager like PM2 or Docker
 
+## 📦 Release Management
+
+### Automated Releases
+
+The project uses automated release management via GitHub Actions:
+
+#### Option 1: Manual Release
+1. **Go to GitHub** → Actions → CI/CD Pipeline
+2. **Click "Run workflow"**
+3. **Select version type**:
+   - `patch` - Bug fixes (1.0.0 → 1.0.1)
+   - `minor` - New features (1.0.0 → 1.1.0)
+   - `major` - Breaking changes (1.0.0 → 2.0.0)
+4. **Add release notes** (optional)
+5. **Run the workflow**
+
+#### Option 2: Tag-based Release
+1. **Create and push a tag**:
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+2. **Pipeline automatically creates release**
+
+### What happens automatically:
+
+- ✅ **Version bump** in package.json
+- ✅ **Git tag** created
+- ✅ **GitHub Release** with changelog
+- ✅ **CHANGELOG.md** updated
+- ✅ **Changelog generation** from commit messages
+
+### Commit Convention
+
+Use conventional commits for automatic changelog generation:
+
+- `feat:` - New features
+- `fix:` - Bug fixes
+- `docs:` - Documentation changes
+- `style:` - Code style changes
+- `refactor:` - Code refactoring
+- `test:` - Test changes
+- `chore:` - Maintenance tasks
+
 ## 🤝 Contributing
 
 1. Fork the repository

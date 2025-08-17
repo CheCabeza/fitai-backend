@@ -1,16 +1,11 @@
-name: CI/CD Pipeline
+name: Release
 
 on:
-  push:
-    branches: [main]
-    tags: ['v*']
-  pull_request:
-    branches: [main]
   workflow_dispatch:
     inputs:
       version_type:
-        description: 'Version type to bump (for manual release)'
-        required: false
+        description: 'Version type to bump'
+        required: true
         default: 'patch'
         type: choice
         options:
@@ -23,42 +18,8 @@ on:
         type: string
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Run linter
-      run: npm run lint
-
-    - name: Run formatter check
-      run: npm run format:check
-
-    - name: Build project
-      run: npm run build
-
-    - name: Run tests
-      run: npm test
-      env:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
   release:
-    needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
     
     steps:
     - name: Checkout code
@@ -81,25 +42,21 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
 
-    - name: Determine version
-      id: version
+    - name: Bump version
+      id: bump
       run: |
-        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-          # Manual release - bump version
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "Current version: $CURRENT_VERSION"
-          
-          VERSION_TYPE="${{ inputs.version_type }}"
-          NEW_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version)
-          NEW_VERSION=${NEW_VERSION#v}
-          
-          echo "New version: $NEW_VERSION"
-          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-        else
-          # Tag-based release - extract version from tag
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-        fi
+        # Get current version
+        CURRENT_VERSION=$(node -p "require('./package.json').version")
+        echo "Current version: $CURRENT_VERSION"
+        
+        # Bump version based on input
+        VERSION_TYPE="${{ inputs.version_type }}"
+        NEW_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version)
+        NEW_VERSION=${NEW_VERSION#v}
+        
+        echo "New version: $NEW_VERSION"
+        echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "version_type=$VERSION_TYPE" >> $GITHUB_OUTPUT
 
     - name: Generate changelog
       id: changelog
@@ -141,26 +98,24 @@ jobs:
         # Clean up
         rm -f temp_changelog.txt
 
-    - name: Commit version bump (manual release only)
-      if: github.event_name == 'workflow_dispatch'
+    - name: Commit version bump
       run: |
         git add package.json package-lock.json
-        git commit -m "chore: bump version to ${{ steps.version.outputs.version }}"
+        git commit -m "chore: bump version to ${{ steps.bump.outputs.version }}"
         git push
 
-    - name: Create Git tag (manual release only)
-      if: github.event_name == 'workflow_dispatch'
+    - name: Create Git tag
       run: |
-        git tag -a v${{ steps.version.outputs.version }} -m "Release v${{ steps.version.outputs.version }}"
-        git push origin v${{ steps.version.outputs.version }}
+        git tag -a v${{ steps.bump.outputs.version }} -m "Release v${{ steps.bump.outputs.version }}"
+        git push origin v${{ steps.bump.outputs.version }}
 
     - name: Create GitHub Release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v${{ steps.version.outputs.version }}
-        release_name: Release v${{ steps.version.outputs.version }}
+        tag_name: v${{ steps.bump.outputs.version }}
+        release_name: Release v${{ steps.bump.outputs.version }}
         body: ${{ steps.changelog.outputs.changelog }}
         draft: false
         prerelease: false
@@ -169,7 +124,7 @@ jobs:
       run: |
         # Create or update CHANGELOG.md
         RELEASE_DATE=$(date +"%Y-%m-%d")
-        RELEASE_HEADER="## [${{ steps.version.outputs.version }}] - $RELEASE_DATE"
+        RELEASE_HEADER="## [${{ steps.bump.outputs.version }}] - $RELEASE_DATE"
         
         if [ -f CHANGELOG.md ]; then
           # Add new release at the top
@@ -185,10 +140,10 @@ jobs:
         fi
         
         git add CHANGELOG.md
-        git commit -m "docs: update changelog for v${{ steps.version.outputs.version }}"
+        git commit -m "docs: update changelog for v${{ steps.bump.outputs.version }}"
         git push
 
     - name: Success message
       run: |
-        echo "🎉 Successfully released version ${{ steps.version.outputs.version }}!"
+        echo "🎉 Successfully released version ${{ steps.bump.outputs.version }}!"
         echo "📝 Release notes: ${{ steps.changelog.outputs.changelog }}"
