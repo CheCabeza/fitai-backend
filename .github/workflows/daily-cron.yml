@@ -8,69 +8,76 @@ on:
 jobs:
   daily-cron:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Build project
-      run: npm run build
+      - name: Build project
+        run: npm run build
 
-    - name: Run tests
-      run: npm test
-      env:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      - name: Run tests
+        run: npm test
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-    - name: Execute Daily AI Generation
-      run: |
-        echo "🔄 Starting daily AI generation..."
-        
-        # Create a simple script to run the AI functions
-        cat > daily-generate.js << 'EOF'
-        const { generateAndInsertExercise, generateAndInsertFood } = require('./dist/utils/ai.js');
-        
-        async function main() {
-          try {
-            console.log('📝 Generating daily exercise...');
-            const exerciseResult = await generateAndInsertExercise();
-            console.log('Exercise result:', exerciseResult);
-            
-            console.log('📝 Generating daily food...');
-            const foodResult = await generateAndInsertFood();
-            console.log('Food result:', foodResult);
-            
-            console.log('✅ Daily generation completed');
-          } catch (error) {
-            console.error('Error:', error);
-            process.exit(1);
+      - name: Execute Daily AI Generation
+        run: |
+          echo "🔄 Starting daily AI generation..."
+
+          # Create a simple script to run the AI functions
+          cat > daily-generate.js << 'EOF'
+          const { generateAndInsertExercise, generateAndInsertFood } = require('./dist/utils/ai.js');
+
+          async function main() {
+            try {
+              console.log('📝 Generating daily exercise...');
+              const exerciseResult = await generateAndInsertExercise();
+              console.log('Exercise result:', exerciseResult);
+              if (!exerciseResult.success) {
+                console.error('❌ Exercise generation failed:', exerciseResult.error);
+                process.exit(1);
+              }
+              
+              console.log('📝 Generating daily food...');
+              const foodResult = await generateAndInsertFood();
+              console.log('Food result:', foodResult);
+              if (!foodResult.success) {
+                console.error('❌ Food generation failed:', foodResult.error);
+                process.exit(1);
+              }
+              
+              console.log('✅ Daily generation completed successfully!');
+            } catch (error) {
+              console.error('❌ Error during daily generation:', error);
+              process.exit(1);
+            }
           }
-        }
-        
-        main();
-        EOF
-        
-        # Execute the generation
-        node daily-generate.js
-      env:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-    - name: Show Results
-      run: |
-        echo "📊 Daily generation results:"
-        echo "Check your Supabase database for new exercises and foods"
-      continue-on-error: true
+          main();
+          EOF
+
+          # Execute the generation
+          node daily-generate.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Show Results
+        run: |
+          echo "📊 Daily generation completed successfully!"
+          echo "Check your Supabase database for new exercises and foods"
