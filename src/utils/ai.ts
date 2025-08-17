@@ -1,5 +1,6 @@
 // AI utility functions with OpenAI
 import OpenAI from 'openai';
+import { getSupabase } from '../config/supabase';
 import { FitnessRecommendations, MealPlan, WorkoutPlan } from '../types';
 
 // Initialize OpenAI (only if API key is available)
@@ -443,6 +444,143 @@ const generateBasicWorkoutPlan = (_: WorkoutPlanRequest): WorkoutPlan => {
       'Rest between sets as needed',
       'Stretch after the workout',
     ],
+  };
+};
+
+// Cron functions for GitHub Actions
+export const generateAndInsertExercise = async () => {
+  try {
+    if (!openai) {
+      console.log('⚠️ OpenAI not configured, skipping AI exercise generation');
+      return { success: false, error: 'OpenAI not configured' };
+    }
+
+    const supabase = getSupabase();
+
+    const systemPrompt = `Generate exercise info in JSON. Only respond with valid JSON:
+{
+  "name": "Exercise Name",
+  "description": "Brief description",
+  "muscle_group": "chest|back|shoulders|arms|legs|core",
+  "equipment": "bodyweight|dumbbells|barbell|resistance_bands|kettlebell",
+  "difficulty_level": "beginner|intermediate|advanced",
+  "instructions": ["Step 1", "Step 2", "Step 3"]
+}`;
+
+    const userPrompt = `Create a random exercise with realistic details. Make it practical and effective.`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 300,
+      temperature: 0.8,
+    });
+
+    const exerciseData = JSON.parse(response.choices[0]?.message?.content || '{}');
+
+    // Insert into database using AI-generated data
+    const { error } = await supabase!.from('exercises').insert({
+      id: crypto.randomUUID(),
+      name: exerciseData.name,
+      description: exerciseData.description,
+      muscle_group: exerciseData.muscle_group,
+      equipment: exerciseData.equipment,
+      difficulty_level: exerciseData.difficulty_level,
+      category: 'strength',
+      instructions: exerciseData.instructions,
+      video_url: null,
+      image_url: null,
+      created_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      console.error('Error inserting AI exercise:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log(`✅ Generated AI exercise: ${exerciseData.name}`);
+    return { success: true, exercise: exerciseData.name };
+  } catch (error) {
+    console.error('Error generating AI exercise:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+export const generateAndInsertFood = async () => {
+  try {
+    if (!openai) {
+      console.log('⚠️ OpenAI not configured, skipping AI food generation');
+      return { success: false, error: 'OpenAI not configured' };
+    }
+
+    const supabase = getSupabase();
+
+    const systemPrompt = `Generate food info in JSON. Only respond with valid JSON:
+{
+  "name": "Food Name",
+  "description": "Brief description",
+  "calories_per_100g": number,
+  "protein_g": number,
+  "carbs_g": number,
+  "fat_g": number,
+  "fiber_g": number,
+  "category": "protein|grains|vegetables|fruits|dairy|nuts_seeds"
+}`;
+
+    const userPrompt = `Create a random food with realistic nutritional values per 100g.`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 200,
+      temperature: 0.8,
+    });
+
+    const foodData = JSON.parse(response.choices[0]?.message?.content || '{}');
+
+    // Insert into database using AI-generated data
+    const { error } = await supabase!.from('foods').insert({
+      id: crypto.randomUUID(),
+      name: foodData.name,
+      description: foodData.description,
+      calories_per_100g: foodData.calories_per_100g,
+      protein_g: foodData.protein_g,
+      carbs_g: foodData.carbs_g,
+      fat_g: foodData.fat_g,
+      fiber_g: foodData.fiber_g,
+      category: foodData.category,
+      created_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      console.error('Error inserting AI food:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log(`✅ Generated AI food: ${foodData.name}`);
+    return { success: true, food: foodData.name };
+  } catch (error) {
+    console.error('Error generating AI food:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+export const generateAll = async () => {
+  console.log('🔄 Generating both exercise and food...');
+
+  const exerciseResult = await generateAndInsertExercise();
+  const foodResult = await generateAndInsertFood();
+
+  return {
+    exercise: exerciseResult,
+    food: foodResult,
+    timestamp: new Date().toISOString(),
   };
 };
 

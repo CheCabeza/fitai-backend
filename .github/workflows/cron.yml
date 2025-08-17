@@ -1,0 +1,106 @@
+name: Manual Cron Trigger
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'What to generate'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - exercises
+        - foods
+      environment:
+        description: 'Environment to run against'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+        - development
+        - production
+
+jobs:
+  trigger-cron:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build project
+      run: npm run build
+
+    - name: Run tests
+      run: npm test
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+    - name: Execute AI Generation
+      run: |
+        echo "🚀 Executing AI generation..."
+        echo "Action: ${{ inputs.action }}"
+        
+        # Create a simple script to run the AI functions
+        cat > generate.js << 'EOF'
+        const { generateAndInsertExercise, generateAndInsertFood, generateAll } = require('./dist/utils/ai.js');
+        
+        async function main() {
+          const action = process.argv[2];
+          
+          try {
+            switch (action) {
+              case 'exercises':
+                console.log('📝 Generating exercise...');
+                const exerciseResult = await generateAndInsertExercise();
+                console.log('Exercise result:', exerciseResult);
+                break;
+              case 'foods':
+                console.log('📝 Generating food...');
+                const foodResult = await generateAndInsertFood();
+                console.log('Food result:', foodResult);
+                break;
+              case 'all':
+                console.log('📝 Generating both...');
+                const allResult = await generateAll();
+                console.log('All results:', allResult);
+                break;
+              default:
+                console.error('Unknown action:', action);
+                process.exit(1);
+            }
+          } catch (error) {
+            console.error('Error:', error);
+            process.exit(1);
+          }
+        }
+        
+        main();
+        EOF
+        
+        # Execute the generation
+        node generate.js ${{ inputs.action }}
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+    - name: Show Results
+      run: |
+        echo "✅ AI generation completed successfully!"
+        echo "Check your Supabase database for new data"
+      continue-on-error: true

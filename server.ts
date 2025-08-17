@@ -1,6 +1,6 @@
 import app from './src/app';
 import { getConfig, isDevelopment, isProduction, isTest } from './src/config/env';
-import CronService from './src/services/cronService';
+
 
 // Load and validate configuration
 const config = getConfig();
@@ -37,9 +37,6 @@ app.listen(PORT, () => {
     console.log(`🗄️  Database: Local PostgreSQL`);
   }
   
-  // Initialize cron service for data population
-  if (isProduction() || isDevelopment()) {
-    console.log(`⏰ Initializing cron service for data population...`);
-    new CronService();
-  }
+  // Cron service is now managed by GitHub Actions
+  console.log('🤖 CronService available via API endpoints (managed by GitHub Actions)');
 });
