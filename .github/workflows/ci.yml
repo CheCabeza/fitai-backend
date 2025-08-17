@@ -14,9 +14,9 @@ on:
         default: 'patch'
         type: choice
         options:
-        - patch
-        - minor
-        - major
+          - patch
+          - minor
+          - major
       release_notes:
         description: 'Release notes (optional)'
         required: false
@@ -25,170 +25,170 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Run linter
-      run: npm run lint
+      - name: Run linter
+        run: npm run lint
 
-    - name: Run formatter check
-      run: npm run format:check
+      - name: Run formatter check
+        run: npm run format:check
 
-    - name: Build project
-      run: npm run build
+      - name: Build project
+        run: npm run build
 
-    - name: Run tests
-      run: npm test
-      env:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      - name: Run tests
+        run: npm test
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
   release:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Setup Git
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+      - name: Setup Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
 
-    - name: Determine version
-      id: version
-      run: |
-        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-          # Manual release - bump version
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "Current version: $CURRENT_VERSION"
-          
-          VERSION_TYPE="${{ inputs.version_type }}"
-          NEW_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version)
-          NEW_VERSION=${NEW_VERSION#v}
-          
-          echo "New version: $NEW_VERSION"
-          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-        else
-          # Tag-based release - extract version from tag
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-        fi
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # Manual release - bump version
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+            echo "Current version: $CURRENT_VERSION"
+            
+            VERSION_TYPE="${{ inputs.version_type }}"
+            NEW_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version)
+            NEW_VERSION=${NEW_VERSION#v}
+            
+            echo "New version: $NEW_VERSION"
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          else
+            # Tag-based release - extract version from tag
+            VERSION=${GITHUB_REF#refs/tags/v}
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          fi
 
-    - name: Generate changelog
-      id: changelog
-      run: |
-        # Get commits since last tag
-        PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-        
-        if [ -z "$PREVIOUS_TAG" ]; then
-          # First release
-          COMMITS=$(git log --oneline --no-merges)
-        else
+      - name: Generate changelog
+        id: changelog
+        run: |
           # Get commits since last tag
-          COMMITS=$(git log --oneline --no-merges ${PREVIOUS_TAG}..HEAD)
-        fi
-        
-        # Create changelog
-        CHANGELOG="## What's Changed\n\n"
-        CHANGELOG+="### Features\n"
-        echo "$COMMITS" | grep -i "feat:" | sed 's/^/- /' >> temp_changelog.txt || true
-        CHANGELOG+=$(cat temp_changelog.txt 2>/dev/null || echo "- Initial release\n")
-        
-        CHANGELOG+="\n### Fixes\n"
-        echo "$COMMITS" | grep -i "fix:" | sed 's/^/- /' >> temp_changelog.txt || true
-        CHANGELOG+=$(cat temp_changelog.txt 2>/dev/null || echo "- No fixes in this release\n")
-        
-        CHANGELOG+="\n### Other Changes\n"
-        echo "$COMMITS" | grep -v -i "feat:\|fix:" | sed 's/^/- /' >> temp_changelog.txt || true
-        CHANGELOG+=$(cat temp_changelog.txt 2>/dev/null || echo "- No other changes\n")
-        
-        # Add custom release notes if provided
-        if [ -n "${{ inputs.release_notes }}" ]; then
-          CHANGELOG+="\n### Release Notes\n${{ inputs.release_notes }}\n"
-        fi
-        
-        echo "changelog<<EOF" >> $GITHUB_OUTPUT
-        echo "$CHANGELOG" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-        
-        # Clean up
-        rm -f temp_changelog.txt
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
 
-    - name: Commit version bump (manual release only)
-      if: github.event_name == 'workflow_dispatch'
-      run: |
-        git add package.json package-lock.json
-        git commit -m "chore: bump version to ${{ steps.version.outputs.version }}"
-        git push
+          if [ -z "$PREVIOUS_TAG" ]; then
+            # First release
+            COMMITS=$(git log --oneline --no-merges)
+          else
+            # Get commits since last tag
+            COMMITS=$(git log --oneline --no-merges ${PREVIOUS_TAG}..HEAD)
+          fi
 
-    - name: Create Git tag (manual release only)
-      if: github.event_name == 'workflow_dispatch'
-      run: |
-        git tag -a v${{ steps.version.outputs.version }} -m "Release v${{ steps.version.outputs.version }}"
-        git push origin v${{ steps.version.outputs.version }}
+          # Create changelog
+          CHANGELOG="## What's Changed\n\n"
+          CHANGELOG+="### Features\n"
+          echo "$COMMITS" | grep -i "feat:" | sed 's/^/- /' >> temp_changelog.txt || true
+          CHANGELOG+=$(cat temp_changelog.txt 2>/dev/null || echo "- Initial release\n")
 
-    - name: Create GitHub Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ steps.version.outputs.version }}
-        release_name: Release v${{ steps.version.outputs.version }}
-        body: ${{ steps.changelog.outputs.changelog }}
-        draft: false
-        prerelease: false
+          CHANGELOG+="\n### Fixes\n"
+          echo "$COMMITS" | grep -i "fix:" | sed 's/^/- /' >> temp_changelog.txt || true
+          CHANGELOG+=$(cat temp_changelog.txt 2>/dev/null || echo "- No fixes in this release\n")
 
-    - name: Update CHANGELOG.md
-      run: |
-        # Create or update CHANGELOG.md
-        RELEASE_DATE=$(date +"%Y-%m-%d")
-        RELEASE_HEADER="## [${{ steps.version.outputs.version }}] - $RELEASE_DATE"
-        
-        if [ -f CHANGELOG.md ]; then
-          # Add new release at the top
-          sed -i "1i $RELEASE_HEADER\n${{ steps.changelog.outputs.changelog }}\n" CHANGELOG.md
-        else
-          # Create new CHANGELOG.md
-          echo "# Changelog" > CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          echo "All notable changes to this project will be documented in this file." >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          echo "$RELEASE_HEADER" >> CHANGELOG.md
-          echo "${{ steps.changelog.outputs.changelog }}" >> CHANGELOG.md
-        fi
-        
-        git add CHANGELOG.md
-        git commit -m "docs: update changelog for v${{ steps.version.outputs.version }}"
-        git push
+          CHANGELOG+="\n### Other Changes\n"
+          echo "$COMMITS" | grep -v -i "feat:\|fix:" | sed 's/^/- /' >> temp_changelog.txt || true
+          CHANGELOG+=$(cat temp_changelog.txt 2>/dev/null || echo "- No other changes\n")
 
-    - name: Success message
-      run: |
-        echo "🎉 Successfully released version ${{ steps.version.outputs.version }}!"
-        echo "📝 Release notes: ${{ steps.changelog.outputs.changelog }}"
+          # Add custom release notes if provided
+          if [ -n "${{ inputs.release_notes }}" ]; then
+            CHANGELOG+="\n### Release Notes\n${{ inputs.release_notes }}\n"
+          fi
+
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Clean up
+          rm -f temp_changelog.txt
+
+      - name: Commit version bump (manual release only)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to ${{ steps.version.outputs.version }}"
+          git push
+
+      - name: Create Git tag (manual release only)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git tag -a v${{ steps.version.outputs.version }} -m "Release v${{ steps.version.outputs.version }}"
+          git push origin v${{ steps.version.outputs.version }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          release_name: Release v${{ steps.version.outputs.version }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+
+      - name: Update CHANGELOG.md
+        run: |
+          # Create or update CHANGELOG.md
+          RELEASE_DATE=$(date +"%Y-%m-%d")
+          RELEASE_HEADER="## [${{ steps.version.outputs.version }}] - $RELEASE_DATE"
+
+          if [ -f CHANGELOG.md ]; then
+            # Add new release at the top
+            sed -i "1i $RELEASE_HEADER\n${{ steps.changelog.outputs.changelog }}\n" CHANGELOG.md
+          else
+            # Create new CHANGELOG.md
+            echo "# Changelog" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "All notable changes to this project will be documented in this file." >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "$RELEASE_HEADER" >> CHANGELOG.md
+            echo "${{ steps.changelog.outputs.changelog }}" >> CHANGELOG.md
+          fi
+
+          git add CHANGELOG.md
+          git commit -m "docs: update changelog for v${{ steps.version.outputs.version }}"
+          git push
+
+      - name: Success message
+        run: |
+          echo "🎉 Successfully released version ${{ steps.version.outputs.version }}!"
+          echo "📝 Release notes: ${{ steps.changelog.outputs.changelog }}"
