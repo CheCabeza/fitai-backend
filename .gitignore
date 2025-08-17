@@ -113,14 +113,7 @@ temp/
 ehthumbs.db
 Thumbs.db
 
-# Prisma
-prisma/migrations/
-prisma/dev.db
-prisma/dev.db-journal
-prisma/*.d.ts
-prisma/*.d.ts.map
-prisma/*.js
-prisma/*.js.map
+
 
 # Database
 *.db
