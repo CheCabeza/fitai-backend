@@ -11,6 +11,7 @@ import { swaggerSpecs } from './utils/swagger';
 import { aiRoutes } from './routes/ai';
 import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
+import cronRoutes from './routes/cron';
 
 const app = express();
 
@@ -69,6 +70,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/cron', cronRoutes);
 
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {

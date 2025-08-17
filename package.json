@@ -15,10 +15,15 @@
     "check": "prettier --check src/ && npm run lint",
     "setup": "./scripts/setup.sh",
     "env:dev": "cp env.development.example .env.development",
-    "env:test": "cp env.test.example .env.test"
+    "env:test": "cp env.test.example .env.test",
+    "cron:exercises": "curl -X POST http://localhost:3001/api/cron/populate-exercises",
+    "cron:foods": "curl -X POST http://localhost:3001/api/cron/populate-foods",
+    "cron:all": "curl -X POST http://localhost:3001/api/cron/populate-all",
+    "cron:status": "curl http://localhost:3001/api/cron/status"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.55.0",
+    "@types/node-cron": "^3.0.11",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
@@ -27,6 +32,7 @@
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
+    "node-cron": "^4.2.1",
     "openai": "^5.12.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
