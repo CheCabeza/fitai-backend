@@ -26,10 +26,14 @@ interface UserRegistrationData {
   password: string;
   name: string;
   age?: number;
+  date_of_birth?: string;
   weight?: number;
+  weight_kg?: number;
   height?: number;
+  height_cm?: number;
   goal?: string;
   activityLevel?: string;
+  activity_level?: string;
   restrictions?: string[];
 }
 
@@ -72,8 +76,21 @@ authRoutes.post(
     try {
       ensureSupabaseConfig();
 
-      const { email, password, name, age, weight, height, goal, activityLevel, restrictions } =
-        req.body as UserRegistrationData;
+      const {
+        email,
+        password,
+        name,
+        age,
+        date_of_birth,
+        weight,
+        weight_kg,
+        height,
+        height_cm,
+        goal,
+        activityLevel,
+        activity_level,
+        restrictions,
+      } = req.body as UserRegistrationData;
 
       // Basic validations
       if (!email || !password || !name) {
@@ -112,13 +129,24 @@ authRoutes.post(
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
 
-      // Calculate age from date of birth if provided
+      // Handle date of birth and age
       let dateOfBirth = null;
-      if (age) {
+      if (date_of_birth) {
+        dateOfBirth = date_of_birth;
+      } else if (age) {
         const currentYear = new Date().getFullYear();
         const birthYear = currentYear - age;
         dateOfBirth = `${birthYear}-01-01`; // Approximate date
       }
+
+      // Handle height (convert to cm if needed)
+      const finalHeight = height_cm || (height ? height * 100 : null);
+
+      // Handle weight (use weight_kg if provided, otherwise weight)
+      const finalWeight = weight_kg || weight;
+
+      // Handle activity level
+      const finalActivityLevel = activity_level || activityLevel;
 
       // Create user data
       const userData = {
@@ -128,9 +156,9 @@ authRoutes.post(
         first_name: firstName,
         last_name: lastName,
         date_of_birth: dateOfBirth,
-        height_cm: height ? height * 100 : null, // Convert to cm
-        weight_kg: weight,
-        activity_level: activityLevel as any,
+        height_cm: finalHeight,
+        weight_kg: finalWeight,
+        activity_level: finalActivityLevel as any,
         fitness_goals: goal ? [goal] : null,
         dietary_restrictions: restrictions || null,
       } as Inserts<'users'>;
@@ -149,14 +177,26 @@ authRoutes.post(
         expiresIn: '7d',
       });
 
+      // Calculate age from date of birth for response
+      let calculatedAge = null;
+      if (user.date_of_birth) {
+        const birthDate = new Date(user.date_of_birth);
+        const today = new Date();
+        calculatedAge = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          calculatedAge--;
+        }
+      }
+
       // Return user data without password
       const userResponse = {
         id: user.id,
         email: user.email,
         name: `${user.first_name} ${user.last_name}`.trim(),
-        age: age || null,
+        age: calculatedAge,
         weight: user.weight_kg,
-        height: user.height_cm ? user.height_cm / 100 : null, // Convert back to meters
+        height: user.height_cm,
         goal: user.fitness_goals ? user.fitness_goals[0] : null,
         activityLevel: user.activity_level,
         restrictions: user.dietary_restrictions || [],

@@ -30,11 +30,20 @@ export const validateRegistration = [
     .withMessage('Name must be between 2 and 50 characters long')
     .trim(),
   body('age').optional().isInt({ min: 13, max: 120 }).withMessage('Age must be between 13 and 120'),
+  body('date_of_birth').optional().isISO8601().withMessage('Date of birth must be a valid date'),
   body('weight')
     .optional()
     .isFloat({ min: 30, max: 300 })
     .withMessage('Weight must be between 30 and 300 kg'),
+  body('weight_kg')
+    .optional()
+    .isFloat({ min: 30, max: 300 })
+    .withMessage('Weight must be between 30 and 300 kg'),
   body('height')
+    .optional()
+    .isFloat({ min: 100, max: 250 })
+    .withMessage('Height must be between 100 and 250 cm'),
+  body('height_cm')
     .optional()
     .isFloat({ min: 100, max: 250 })
     .withMessage('Height must be between 100 and 250 cm'),
@@ -44,8 +53,16 @@ export const validateRegistration = [
     .withMessage('Goal must be one of: lose_weight, gain_muscle, maintain, improve_fitness'),
   body('activityLevel')
     .optional()
-    .isIn(['sedentary', 'light', 'moderate', 'very', 'extreme'])
-    .withMessage('Activity level must be one of: sedentary, light, moderate, very, extreme'),
+    .isIn(['sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active'])
+    .withMessage(
+      'Activity level must be one of: sedentary, lightly_active, moderately_active, very_active, extremely_active'
+    ),
+  body('activity_level')
+    .optional()
+    .isIn(['sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active'])
+    .withMessage(
+      'Activity level must be one of: sedentary, lightly_active, moderately_active, very_active, extremely_active'
+    ),
   handleValidationErrors,
 ];
 
@@ -78,8 +95,10 @@ export const validateProfileUpdate = [
     .withMessage('Goal must be one of: lose_weight, gain_muscle, maintain, improve_fitness'),
   body('activityLevel')
     .optional()
-    .isIn(['sedentary', 'light', 'moderate', 'very', 'extreme'])
-    .withMessage('Activity level must be one of: sedentary, light, moderate, very, extreme'),
+    .isIn(['sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active'])
+    .withMessage(
+      'Activity level must be one of: sedentary, lightly_active, moderately_active, very_active, extremely_active'
+    ),
   handleValidationErrors,
 ];
 

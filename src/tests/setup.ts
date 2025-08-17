@@ -61,7 +61,7 @@ jest.mock('openai', () => {
   // Export as default for ES6 imports
   const OpenAI = mockOpenAI as any;
   OpenAI.default = mockOpenAI;
-  
+
   return OpenAI;
 });
 
