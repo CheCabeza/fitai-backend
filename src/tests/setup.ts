@@ -33,31 +33,34 @@ jest.mock('bcryptjs', () => ({
 
 // Mock OpenAI for tests
 jest.mock('openai', () => {
-  return {
-    OpenAI: jest.fn().mockImplementation(() => ({
-      chat: {
-        completions: {
-          create: jest.fn().mockResolvedValue({
-            choices: [
-              {
-                message: {
-                  content: JSON.stringify({
-                    meals: {
-                      breakfast: { name: 'Test Breakfast', foods: [], totalCalories: 400 },
-                      lunch: { name: 'Test Lunch', foods: [], totalCalories: 600 },
-                      dinner: { name: 'Test Dinner', foods: [], totalCalories: 500 },
-                      snacks: { name: 'Test Snacks', foods: [], totalCalories: 200 },
-                    },
-                    totalCalories: 1700,
-                    recommendations: ['Test recommendation 1', 'Test recommendation 2'],
-                  }),
-                },
+  const mockOpenAI = jest.fn().mockImplementation(() => ({
+    chat: {
+      completions: {
+        create: jest.fn().mockResolvedValue({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  meals: {
+                    breakfast: { name: 'Test Breakfast', foods: [], totalCalories: 400 },
+                    lunch: { name: 'Test Lunch', foods: [], totalCalories: 600 },
+                    dinner: { name: 'Test Dinner', foods: [], totalCalories: 500 },
+                    snacks: { name: 'Test Snacks', foods: [], totalCalories: 200 },
+                  },
+                  totalCalories: 1700,
+                  recommendations: ['Test recommendation 1', 'Test recommendation 2'],
+                }),
               },
-            ],
-          }),
-        },
+            },
+          ],
+        }),
       },
-    })),
+    },
+  }));
+
+  return {
+    default: mockOpenAI,
+    OpenAI: mockOpenAI,
   };
 });
 
