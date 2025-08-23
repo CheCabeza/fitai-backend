@@ -1,4 +1,5 @@
 // AI utility functions with OpenAI
+import crypto from 'crypto';
 import OpenAI from 'openai';
 import { getSupabase } from '../config/supabase';
 import { FitnessRecommendations, MealPlan, WorkoutPlan } from '../types';
@@ -447,17 +448,20 @@ const generateBasicWorkoutPlan = (_: WorkoutPlanRequest): WorkoutPlan => {
   };
 };
 
-// Cron functions for GitHub Actions
+const url = process.env['OLLAMA_URL'] || 'http://localhost:11434'; // configurable
+
 export const generateAndInsertExercise = async () => {
   try {
-    if (!openai) {
-      console.log('⚠️ OpenAI not configured, skipping AI exercise generation');
-      return { success: false, error: 'OpenAI not configured' };
+    const healthCheck = await fetch(`${url}/api/tags`).catch(() => null);
+    if (!healthCheck?.ok) {
+      console.log('⚠️ Ollama not running, skipping exercise generation');
+      return { success: false, error: 'Ollama not available' };
     }
 
     const supabase = getSupabase();
 
-    const systemPrompt = `Generate exercise info in JSON. Only respond with valid JSON:
+    const prompt = `
+Generate an exercise in strict JSON format only (no explanation, no extra text).
 {
   "name": "Exercise Name",
   "description": "Brief description",
@@ -465,23 +469,32 @@ export const generateAndInsertExercise = async () => {
   "equipment": "bodyweight|dumbbells|barbell|resistance_bands|kettlebell",
   "difficulty_level": "beginner|intermediate|advanced",
   "instructions": ["Step 1", "Step 2", "Step 3"]
-}`;
+}
 
-    const userPrompt = `Create a random exercise with realistic details. Make it practical and effective.`;
+Create a random exercise with realistic details. Make it practical and effective.
+`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      max_tokens: 300,
-      temperature: 0.8,
+    const response = await fetch(`${url}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'llama3:8b',
+        prompt,
+      }),
     });
 
-    const exerciseData = JSON.parse(response.choices[0]?.message?.content || '{}');
+    if (!response.ok) throw new Error(`Ollama error: ${response.statusText}`);
+    const result = (await response.json()) as { response?: string };
+    const rawText = result.response?.trim() || '{}';
 
-    // Insert into database using AI-generated data
+    let exerciseData;
+    try {
+      exerciseData = JSON.parse(rawText);
+    } catch {
+      console.error('Failed to parse Ollama JSON:', rawText);
+      return { success: false, error: 'Invalid JSON returned by Ollama' };
+    }
+
     const { error } = await supabase!.from('exercises').insert({
       id: crypto.randomUUID(),
       name: exerciseData.name,
@@ -511,50 +524,58 @@ export const generateAndInsertExercise = async () => {
 
 export const generateAndInsertFood = async () => {
   try {
-    if (!openai) {
-      console.log('⚠️ OpenAI not configured, skipping AI food generation');
-      return { success: false, error: 'OpenAI not configured' };
+    const url = process.env['OLLAMA_URL'] || 'http://localhost:11434';
+    const healthCheck = await fetch(`${url}/api/tags`).catch(() => null);
+    if (!healthCheck?.ok) {
+      console.log('⚠️ Ollama not running, skipping food generation');
+      return { success: false, error: 'Ollama not available' };
     }
 
     const supabase = getSupabase();
 
-    const systemPrompt = `Generate food info in JSON. Only respond with valid JSON:
+    const prompt = `
+Generate a healthy food item in strict JSON format only:
 {
   "name": "Food Name",
-  "description": "Brief description",
-  "calories_per_100g": number,
-  "protein_g": number,
-  "carbs_g": number,
-  "fat_g": number,
-  "fiber_g": number,
-  "category": "protein|grains|vegetables|fruits|dairy|nuts_seeds"
-}`;
+  "calories": number,
+  "protein": number,
+  "carbs": number,
+  "fats": number,
+  "description": "Short description"
+}
 
-    const userPrompt = `Create a random food with realistic nutritional values per 100g.`;
+Create a random healthy food with realistic nutritional values.
+`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      max_tokens: 200,
-      temperature: 0.8,
+    const response = await fetch(`${url}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'llama3:8b',
+        prompt,
+      }),
     });
 
-    const foodData = JSON.parse(response.choices[0]?.message?.content || '{}');
+    if (!response.ok) throw new Error(`Ollama error: ${response.statusText}`);
+    const result = (await response.json()) as { response?: string };
+    const rawText = result.response?.trim() || '{}';
 
-    // Insert into database using AI-generated data
+    let foodData;
+    try {
+      foodData = JSON.parse(rawText);
+    } catch {
+      console.error('Failed to parse Ollama JSON:', rawText);
+      return { success: false, error: 'Invalid JSON returned by Ollama' };
+    }
+
     const { error } = await supabase!.from('foods').insert({
       id: crypto.randomUUID(),
       name: foodData.name,
+      calories: foodData.calories,
+      protein: foodData.protein,
+      carbs: foodData.carbs,
+      fats: foodData.fats,
       description: foodData.description,
-      calories_per_100g: foodData.calories_per_100g,
-      protein_g: foodData.protein_g,
-      carbs_g: foodData.carbs_g,
-      fat_g: foodData.fat_g,
-      fiber_g: foodData.fiber_g,
-      category: foodData.category,
       created_at: new Date().toISOString(),
     });
 
@@ -573,6 +594,17 @@ export const generateAndInsertFood = async () => {
 
 export const generateAll = async () => {
   console.log('🔄 Generating both exercise and food...');
+
+  const url = process.env['OLLAMA_URL'] || 'http://localhost:11434';
+  const healthCheck = await fetch(`${url}/api/tags`).catch(() => null);
+  if (!healthCheck?.ok) {
+    console.log('⚠️ Ollama not running, skipping generation');
+    return {
+      exercise: { success: false, error: 'Ollama not available' },
+      food: { success: false, error: 'Ollama not available' },
+      timestamp: new Date().toISOString(),
+    };
+  }
 
   const exerciseResult = await generateAndInsertExercise();
   const foodResult = await generateAndInsertFood();
