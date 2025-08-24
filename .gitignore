@@ -126,3 +126,6 @@ Thumbs.db
 
 # Local development
 .local/
+
+# GitHub Actions Runner
+actions-runner/
