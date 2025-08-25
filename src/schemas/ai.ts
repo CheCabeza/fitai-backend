@@ -12,6 +12,8 @@ export const ExerciseSchema = z.object({
     .describe('Equipment needed'),
   difficulty_level: z.enum(['beginner', 'intermediate', 'advanced']).describe('Difficulty level'),
   instructions: z.array(z.string()).describe('Step-by-step instructions'),
+  video_url: z.string().nullable().optional().describe('URL to exercise video'),
+  image_url: z.string().nullable().optional().describe('URL to exercise image'),
 }) as any;
 
 export const FoodSchema = z.object({

@@ -2,8 +2,25 @@ import request from 'supertest';
 import app from '../app';
 import { getSupabase } from '../config/supabase';
 
-// Get the mocked Supabase client
-const mockSupabase = getSupabase() as jest.Mocked<any>;
+// Mock the Supabase client
+jest.mock('../config/supabase');
+
+const mockSupabase = {
+  from: jest.fn().mockReturnValue({
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      }),
+    }),
+    insert: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      }),
+    }),
+  }),
+} as any;
+
+(getSupabase as jest.Mock).mockReturnValue(mockSupabase);
 
 describe('Auth Endpoints', () => {
   const testUser = {
@@ -14,7 +31,7 @@ describe('Auth Endpoints', () => {
     weight: 70,
     height: 175,
     goal: 'lose_weight',
-    activityLevel: 'moderate',
+    activityLevel: 'moderately_active',
     restrictions: [],
   };
 

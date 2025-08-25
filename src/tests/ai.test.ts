@@ -2,8 +2,23 @@ import request from 'supertest';
 import app from '../app';
 import { getSupabase } from '../config/supabase';
 
-// Get the mocked Supabase client
-const mockSupabase = getSupabase() as jest.Mocked<any>;
+// Mock the Supabase client
+jest.mock('../config/supabase');
+
+const mockSupabase = {
+  from: jest.fn().mockReturnValue({
+    select: jest.fn().mockReturnValue({
+      limit: jest.fn().mockReturnValue({
+        order: jest.fn().mockResolvedValue({
+          data: [],
+          error: null,
+        }),
+      }),
+    }),
+  }),
+} as any;
+
+(getSupabase as jest.Mock).mockReturnValue(mockSupabase);
 
 describe('AI Endpoints', () => {
   beforeEach(() => {
