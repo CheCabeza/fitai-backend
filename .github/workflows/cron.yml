@@ -26,8 +26,16 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      - name: Clean workspace
+        run: |
+          echo "🧹 Cleaning workspace..."
+          rm -rf .git
+          rm -rf *
+          
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          clean: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
