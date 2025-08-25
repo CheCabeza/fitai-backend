@@ -1,6 +1,7 @@
 import request from 'supertest';
 import app from '../app';
 import { getSupabase } from '../config/supabase';
+import { UserRegistrationData } from '../types';
 
 // Mock the Supabase client
 jest.mock('../config/supabase');
@@ -23,7 +24,7 @@ const mockSupabase = {
 (getSupabase as jest.Mock).mockReturnValue(mockSupabase);
 
 describe('Auth Endpoints', () => {
-  const testUser = {
+  const testUser: UserRegistrationData = {
     email: 'test@example.com',
     password: 'Test123!',
     name: 'Test User',
@@ -39,39 +40,43 @@ describe('Auth Endpoints', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Reset mockSupabase to its initial state
+    mockSupabase.from = jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+      insert: jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+    });
   });
 
   describe('POST /api/auth/register', () => {
     it('should register a new user successfully', async () => {
-      // Mock Supabase responses
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({ data: null, error: null }),
-          }),
-        }),
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                id: 'new-user-id',
-                email: testUser.email,
-                first_name: 'Test',
-                last_name: 'User',
-                date_of_birth: '1990-01-01',
-                gender: 'male',
-                height_cm: 175,
-                weight_kg: 70,
-                activity_level: 'moderately_active',
-                fitness_goals: ['lose weight'],
-                dietary_restrictions: [],
-                created_at: new Date(),
-                updated_at: new Date(),
-              },
-              error: null,
-            }),
-          }),
-        }),
+      // Mock successful user creation
+      const mockInsert = mockSupabase.from().insert();
+      mockInsert.select().single.mockResolvedValue({
+        data: {
+          id: 'new-user-id',
+          email: testUser.email,
+          first_name: 'Test',
+          last_name: 'User',
+          date_of_birth: '1990-01-01',
+          gender: 'male',
+          height_cm: 175,
+          weight_kg: 70,
+          activity_level: 'moderately_active',
+          fitness_goals: ['lose weight'],
+          dietary_restrictions: [],
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+        error: null,
       });
 
       const res = await request(app).post('/api/auth/register').send(testUser);
@@ -108,30 +113,25 @@ describe('Auth Endpoints', () => {
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
 
       // Mock Supabase responses for login
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                id: 'test-user-id',
-                email: testUser.email,
-                password_hash: '$2b$10$hashedpassword',
-                first_name: 'Test',
-                last_name: 'User',
-                date_of_birth: '1990-01-01',
-                gender: 'male',
-                height_cm: 175,
-                weight_kg: 70,
-                activity_level: 'moderately_active',
-                fitness_goals: ['lose weight'],
-                dietary_restrictions: [],
-                created_at: new Date(),
-                updated_at: new Date(),
-              },
-              error: null,
-            }),
-          }),
-        }),
+      const mockSelect = mockSupabase.from().select();
+      mockSelect.eq().single.mockResolvedValue({
+        data: {
+          id: 'test-user-id',
+          email: testUser.email,
+          password_hash: '$2b$10$hashedpassword',
+          first_name: 'Test',
+          last_name: 'User',
+          date_of_birth: '1990-01-01',
+          gender: 'male',
+          height_cm: 175,
+          weight_kg: 70,
+          activity_level: 'moderately_active',
+          fitness_goals: ['lose weight'],
+          dietary_restrictions: [],
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+        error: null,
       });
 
       const res = await request(app).post('/api/auth/login').send({
@@ -149,13 +149,8 @@ describe('Auth Endpoints', () => {
 
     it('should fail with invalid credentials', async () => {
       // Mock Supabase to return no user
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({ data: null, error: null }),
-          }),
-        }),
-      });
+      const mockSelect = mockSupabase.from().select();
+      mockSelect.eq().single.mockResolvedValue({ data: null, error: null });
 
       const res = await request(app).post('/api/auth/login').send({
         email: testUser.email,
@@ -170,29 +165,24 @@ describe('Auth Endpoints', () => {
   describe('GET /api/auth/profile', () => {
     it('should get user profile with valid token', async () => {
       // Mock Supabase responses for profile
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                id: 'test-user-id',
-                email: testUser.email,
-                first_name: 'Test',
-                last_name: 'User',
-                date_of_birth: '1990-01-01',
-                gender: 'male',
-                height_cm: 175,
-                weight_kg: 70,
-                activity_level: 'moderately_active',
-                fitness_goals: ['lose weight'],
-                dietary_restrictions: [],
-                created_at: new Date(),
-                updated_at: new Date(),
-              },
-              error: null,
-            }),
-          }),
-        }),
+      const mockSelect = mockSupabase.from().select();
+      mockSelect.eq().single.mockResolvedValue({
+        data: {
+          id: 'test-user-id',
+          email: testUser.email,
+          first_name: 'Test',
+          last_name: 'User',
+          date_of_birth: '1990-01-01',
+          gender: 'male',
+          height_cm: 175,
+          weight_kg: 70,
+          activity_level: 'moderately_active',
+          fitness_goals: ['lose weight'],
+          dietary_restrictions: [],
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+        error: null,
       });
 
       const res = await request(app)
