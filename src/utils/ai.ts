@@ -1,7 +1,9 @@
-// AI utility functions with OpenAI
+// AI utility functions with ModelFusion and Ollama
 import crypto from 'crypto';
+import { generateObject, jsonObjectPrompt, ollama, zodSchema } from 'modelfusion';
 import OpenAI from 'openai';
 import { getSupabase } from '../config/supabase';
+import { ExerciseData, ExerciseSchema, FoodData, FoodSchema } from '../schemas/ai';
 import { FitnessRecommendations, MealPlan, WorkoutPlan } from '../types';
 
 // Initialize OpenAI (only if API key is available)
@@ -448,10 +450,9 @@ const generateBasicWorkoutPlan = (_: WorkoutPlanRequest): WorkoutPlan => {
   };
 };
 
-const url = process.env['OLLAMA_URL'] || 'http://localhost:11434'; // configurable
-
 export const generateAndInsertExercise = async () => {
   try {
+    const url = process.env['OLLAMA_URL'] || 'http://localhost:11434';
     const healthCheck = await fetch(`${url}/api/tags`).catch(() => null);
     if (!healthCheck?.ok) {
       console.log('⚠️ Ollama not running, skipping exercise generation');
@@ -460,40 +461,26 @@ export const generateAndInsertExercise = async () => {
 
     const supabase = getSupabase();
 
-    const prompt = `
-Generate an exercise in strict JSON format only (no explanation, no extra text).
-{
-  "name": "Exercise Name",
-  "description": "Brief description",
-  "muscle_group": "chest|back|shoulders|arms|legs|core",
-  "equipment": "bodyweight|dumbbells|barbell|resistance_bands|kettlebell",
-  "difficulty_level": "beginner|intermediate|advanced",
-  "instructions": ["Step 1", "Step 2", "Step 3"]
-}
+    const exercise = await generateObject({
+      model: ollama
+        .ChatTextGenerator({
+          model: 'llama3:8b',
+          maxGenerationTokens: 1024,
+          temperature: 0,
+        })
+        .asObjectGenerationModel(jsonObjectPrompt.instruction()),
 
-Create a random exercise with realistic details. Make it practical and effective.
-`;
+      schema: zodSchema(ExerciseSchema),
 
-    const response = await fetch(`${url}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'llama3:8b',
-        prompt,
-      }),
+      prompt: {
+        system: 'You are an expert personal trainer. Generate realistic and effective exercises.',
+        instruction:
+          'Create a random exercise with realistic details. Make it practical and effective for fitness training.',
+      },
     });
 
-    if (!response.ok) throw new Error(`Ollama error: ${response.statusText}`);
-    const result = (await response.json()) as { response?: string };
-    const rawText = result.response?.trim() || '{}';
-
-    let exerciseData;
-    try {
-      exerciseData = JSON.parse(rawText);
-    } catch {
-      console.error('Failed to parse Ollama JSON:', rawText);
-      return { success: false, error: 'Invalid JSON returned by Ollama' };
-    }
+    // ModelFusion already handles JSON parsing and validation
+    const exerciseData = exercise as ExerciseData;
 
     const { error } = await supabase!.from('exercises').insert({
       id: crypto.randomUUID(),
@@ -560,12 +547,20 @@ Create a random healthy food with realistic nutritional values.
     const result = (await response.json()) as { response?: string };
     const rawText = result.response?.trim() || '{}';
 
-    let foodData;
+    // Extract JSON from the response (Ollama might add extra text)
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    const jsonText = jsonMatch ? jsonMatch[0] : '{}';
+
+    let foodData: FoodData;
     try {
-      foodData = JSON.parse(rawText);
-    } catch {
-      console.error('Failed to parse Ollama JSON:', rawText);
-      return { success: false, error: 'Invalid JSON returned by Ollama' };
+      const parsedData = JSON.parse(jsonText);
+      // Validate the data with Zod schema
+      foodData = FoodSchema.parse(parsedData);
+    } catch (parseError) {
+      console.error('Failed to parse or validate Ollama JSON:', jsonText);
+      console.error('Original response:', rawText);
+      console.error('Validation error:', parseError);
+      return { success: false, error: 'Invalid JSON structure returned by Ollama' };
     }
 
     const { error } = await supabase!.from('foods').insert({
