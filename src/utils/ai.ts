@@ -489,7 +489,6 @@ export const generateAndInsertExercise = async () => {
       muscle_group: exerciseData.muscle_group,
       equipment: exerciseData.equipment,
       difficulty_level: exerciseData.difficulty_level,
-      category: 'strength',
       instructions: exerciseData.instructions,
       video_url: null,
       image_url: null,
@@ -511,57 +510,27 @@ export const generateAndInsertExercise = async () => {
 
 export const generateAndInsertFood = async () => {
   try {
-    const url = process.env['OLLAMA_URL'] || 'http://localhost:11434';
-    const healthCheck = await fetch(`${url}/api/tags`).catch(() => null);
-    if (!healthCheck?.ok) {
-      console.log('⚠️ Ollama not running, skipping food generation');
-      return { success: false, error: 'Ollama not available' };
-    }
-
     const supabase = getSupabase();
 
-    const prompt = `
-Generate a healthy food item in strict JSON format only:
-{
-  "name": "Food Name",
-  "calories": number,
-  "protein": number,
-  "carbs": number,
-  "fats": number,
-  "description": "Short description"
-}
+    const food = await generateObject({
+      model: ollama
+        .ChatTextGenerator({
+          model: 'llama3:8b',
+          maxGenerationTokens: 1024,
+          temperature: 0,
+        })
+        .asObjectGenerationModel(jsonObjectPrompt.instruction()),
 
-Create a random healthy food with realistic nutritional values.
-`;
+      schema: zodSchema(FoodSchema as any),
 
-    const response = await fetch(`${url}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'llama3:8b',
-        prompt,
-      }),
+      prompt: {
+        system: 'You are an expert nutritionist. Generate healthy and nutritious foods.',
+        instruction: 'Create a random healthy food with realistic nutritional values.',
+      },
     });
 
-    if (!response.ok) throw new Error(`Ollama error: ${response.statusText}`);
-    const result = (await response.json()) as { response?: string };
-    const rawText = result.response?.trim() || '{}';
-
-    // Extract JSON from the response (Ollama might add extra text)
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    const jsonText = jsonMatch ? jsonMatch[0] : '{}';
-
-    let foodData: FoodData;
-    try {
-      const parsedData = JSON.parse(jsonText);
-      // Validate the data with Zod schema
-      foodData = FoodSchema.parse(parsedData);
-    } catch (parseError) {
-      console.error('Failed to parse or validate Ollama JSON:', jsonText);
-      console.error('Original response:', rawText);
-      console.error('Validation error:', parseError);
-      return { success: false, error: 'Invalid JSON structure returned by Ollama' };
-    }
+    // ModelFusion already handles JSON parsing and validation
+    const foodData = food as FoodData;
 
     const { error } = await supabase!.from('foods').insert({
       id: crypto.randomUUID(),
