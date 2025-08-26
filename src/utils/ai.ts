@@ -1,4 +1,3 @@
-// AI utility functions with ModelFusion and Ollama
 import crypto from 'crypto';
 import { generateObject, jsonObjectPrompt, ollama, zodSchema } from 'modelfusion';
 import OpenAI from 'openai';
@@ -14,7 +13,6 @@ if (process.env['OPENAI_API_KEY']) {
   });
 }
 
-// Helper function to generate AI responses
 const generateAIResponse = async (prompt: string, systemPrompt?: string): Promise<string> => {
   if (!openai) {
     throw new Error('OpenAI API key not configured');
@@ -69,7 +67,6 @@ const generateMealPlan = async ({
 }: MealPlanRequest): Promise<MealPlan> => {
   try {
     if (openai) {
-      // Use OpenAI to generate personalized plan
       const systemPrompt = `You are an expert nutritionist. Generate healthy and personalized meal plans.
       Respond ONLY with a valid JSON that contains:
       {
@@ -106,11 +103,9 @@ const generateMealPlan = async ({
         recommendations: aiPlan.recommendations || [],
       };
     }
-    // Fallback to basic implementation
     return generateBasicMealPlan({ user, date, preferences, restrictions, targetCalories });
   } catch (error) {
     console.error('Error generating meal plan:', error);
-    // Fallback to basic implementation in case of error
     return generateBasicMealPlan({ user, date, preferences, restrictions, targetCalories });
   }
 };
@@ -127,7 +122,6 @@ const generateWorkoutPlan = async ({
 }: WorkoutPlanRequest): Promise<WorkoutPlan> => {
   try {
     if (openai) {
-      // Use OpenAI to generate personalized plan
       const systemPrompt = `You are an expert personal trainer. Generate personalized workout plans.
       Respond ONLY with a valid JSON that contains:
       {
@@ -168,11 +162,9 @@ const generateWorkoutPlan = async ({
         recommendations: aiPlan.recommendations,
       };
     }
-    // Fallback to basic implementation
     return generateBasicWorkoutPlan({ user, date, focus, duration, equipment });
   } catch (error) {
     console.error('Error generating workout plan:', error);
-    // Fallback to basic implementation in case of error
     return generateBasicWorkoutPlan({ user, date, focus, duration, equipment });
   }
 };
@@ -183,7 +175,6 @@ const generateWorkoutPlan = async ({
 const getFitnessRecommendations = async (userData: any): Promise<FitnessRecommendations> => {
   try {
     if (openai) {
-      // Use OpenAI to generate personalized recommendations
       const systemPrompt = `You are an expert in fitness and nutrition. Generate personalized recommendations.
       Respond ONLY with a valid JSON that contains:
       {
@@ -216,16 +207,13 @@ const getFitnessRecommendations = async (userData: any): Promise<FitnessRecommen
         estimatedCalories: aiRecommendations.estimatedCalories || 2000,
       };
     }
-    // Fallback to basic implementation
     return getBasicRecommendations(userData);
   } catch (error) {
     console.error('Error generating recommendations:', error);
-    // Fallback to basic recommendations in case of error
     return getBasicRecommendations(userData);
   }
 };
 
-// Helper function for basic recommendations
 const getBasicRecommendations = (userData: any): FitnessRecommendations => {
   const { goal, activityLevel } = userData;
 
@@ -263,7 +251,6 @@ const calculateEstimatedCalories = (userData: any): number | null => {
   const bmr = 10 * weight + 6.25 * height - 5 * age + 5; // For men
   // For women: 10 * weight + 6.25 * height - 5 * age - 161
 
-  // Activity multipliers
   const activityMultipliers: Record<string, number> = {
     sedentary: 1.2,
     light: 1.375,
@@ -274,7 +261,6 @@ const calculateEstimatedCalories = (userData: any): number | null => {
 
   const tdee = bmr * (activityMultipliers[activityLevel] || 1.2);
 
-  // Adjust based on goal
   const goalAdjustments: Record<string, number> = {
     lose_weight: -500,
     gain_muscle: 300,
@@ -284,7 +270,6 @@ const calculateEstimatedCalories = (userData: any): number | null => {
   return Math.round(tdee + (goalAdjustments[goal] || 0));
 };
 
-// Basic fallback implementations
 const generateBasicMealPlan = (_: MealPlanRequest): MealPlan => {
   const meals = {
     breakfast: {
@@ -460,48 +445,67 @@ export const generateAndInsertExercise = async () => {
     }
 
     const supabase = getSupabase();
+    const maxAttempts = 5;
 
-    const exercise = await generateObject({
-      model: ollama
-        .ChatTextGenerator({
-          model: 'llama3:8b',
-          maxGenerationTokens: 1024,
-          temperature: 0,
-        })
-        .asObjectGenerationModel(jsonObjectPrompt.instruction()),
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const exercise = await generateObject({
+        model: ollama
+          .ChatTextGenerator({
+            model: 'llama3:8b',
+            maxGenerationTokens: 1024,
+            temperature: 0.7,
+          })
+          .asObjectGenerationModel(jsonObjectPrompt.instruction()),
 
-      schema: zodSchema(ExerciseSchema),
+        schema: zodSchema(ExerciseSchema),
 
-      prompt: {
-        system: 'You are an expert personal trainer. Generate realistic and effective exercises.',
-        instruction:
-          'Create a random exercise with realistic details. Make it practical and effective for fitness training.',
-      },
-    });
+        prompt: {
+          system: 'You are an expert personal trainer. Generate realistic and effective exercises.',
+          instruction: `Create a random exercise with realistic details. Make it practical and effective for fitness training. 
+             IMPORTANT: Generate a unique exercise name that is different from common exercises. 
+             Attempt ${attempt}/${maxAttempts}.`,
+        },
+      });
 
-    // ModelFusion already handles JSON parsing and validation
-    const exerciseData = exercise as ExerciseData;
+      const exerciseData = exercise as ExerciseData;
 
-    const { error } = await supabase!.from('exercises').insert({
-      id: crypto.randomUUID(),
-      name: exerciseData.name,
-      description: exerciseData.description,
-      muscle_group: exerciseData.muscle_group,
-      equipment: exerciseData.equipment,
-      difficulty_level: exerciseData.difficulty_level,
-      instructions: exerciseData.instructions,
-      video_url: null,
-      image_url: null,
-      created_at: new Date().toISOString(),
-    });
+      const { data: existingExercise } = await supabase!
+        .from('exercises')
+        .select('name')
+        .eq('name', exerciseData.name)
+        .single();
 
-    if (error) {
-      console.error('Error inserting AI exercise:', error);
-      return { success: false, error: error.message };
+      if (existingExercise) {
+        console.log(
+          `⚠️ Exercise "${exerciseData.name}" already exists, generating new one... (attempt ${attempt}/${maxAttempts})`
+        );
+        continue;
+      }
+
+      const { error } = await supabase!.from('exercises').insert({
+        id: crypto.randomUUID(),
+        name: exerciseData.name,
+        description: exerciseData.description,
+        muscle_group: exerciseData.muscle_group,
+        equipment: exerciseData.equipment,
+        difficulty_level: exerciseData.difficulty_level,
+        instructions: exerciseData.instructions,
+        video_url: null,
+        image_url: null,
+        created_at: new Date().toISOString(),
+      });
+
+      if (error) {
+        console.error('Error inserting AI exercise:', error);
+        return { success: false, error: error.message };
+      }
+
+      console.log(`✅ Generated unique AI exercise: ${exerciseData.name}`);
+      return { success: true, exercise: exerciseData.name };
     }
 
-    console.log(`✅ Generated AI exercise: ${exerciseData.name}`);
-    return { success: true, exercise: exerciseData.name };
+    console.log(`❌ Could not generate unique exercise after ${maxAttempts} attempts`);
+    return { success: false, error: 'Could not generate unique exercise after maximum attempts' };
   } catch (error) {
     console.error('Error generating AI exercise:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -511,45 +515,65 @@ export const generateAndInsertExercise = async () => {
 export const generateAndInsertFood = async () => {
   try {
     const supabase = getSupabase();
+    const maxAttempts = 5;
 
-    const food = await generateObject({
-      model: ollama
-        .ChatTextGenerator({
-          model: 'llama3:8b',
-          maxGenerationTokens: 1024,
-          temperature: 0,
-        })
-        .asObjectGenerationModel(jsonObjectPrompt.instruction()),
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const food = await generateObject({
+        model: ollama
+          .ChatTextGenerator({
+            model: 'llama3:8b',
+            maxGenerationTokens: 1024,
+            temperature: 0.7,
+          })
+          .asObjectGenerationModel(jsonObjectPrompt.instruction()),
 
-      schema: zodSchema(FoodSchema as any),
+        schema: zodSchema(FoodSchema as any),
 
-      prompt: {
-        system: 'You are an expert nutritionist. Generate healthy and nutritious foods.',
-        instruction: 'Create a random healthy food with realistic nutritional values.',
-      },
-    });
+        prompt: {
+          system: 'You are an expert nutritionist. Generate healthy and nutritious foods.',
+          instruction: `Create a random healthy food with realistic nutritional values. 
+                       IMPORTANT: Generate a unique food name that is different from common foods. 
+                       Attempt ${attempt}/${maxAttempts}.`,
+        },
+      });
 
-    // ModelFusion already handles JSON parsing and validation
-    const foodData = food as FoodData;
+      const foodData = food as FoodData;
 
-    const { error } = await supabase!.from('foods').insert({
-      id: crypto.randomUUID(),
-      name: foodData.name,
-      calories: foodData.calories,
-      protein: foodData.protein,
-      carbs: foodData.carbs,
-      fats: foodData.fats,
-      description: foodData.description,
-      created_at: new Date().toISOString(),
-    });
+      const { data: existingFood } = await supabase!
+        .from('foods')
+        .select('name')
+        .eq('name', foodData.name)
+        .single();
 
-    if (error) {
-      console.error('Error inserting AI food:', error);
-      return { success: false, error: error.message };
+      if (existingFood) {
+        console.log(
+          `⚠️ Food "${foodData.name}" already exists, generating new one... (attempt ${attempt}/${maxAttempts})`
+        );
+        continue;
+      }
+
+      const { error } = await supabase!.from('foods').insert({
+        id: crypto.randomUUID(),
+        name: foodData.name,
+        calories: foodData.calories,
+        protein: foodData.protein,
+        carbs: foodData.carbs,
+        fats: foodData.fats,
+        description: foodData.description,
+        created_at: new Date().toISOString(),
+      });
+
+      if (error) {
+        console.error('Error inserting AI food:', error);
+        return { success: false, error: error.message };
+      }
+
+      console.log(`✅ Generated unique AI food: ${foodData.name}`);
+      return { success: true, food: foodData.name };
     }
 
-    console.log(`✅ Generated AI food: ${foodData.name}`);
-    return { success: true, food: foodData.name };
+    console.log(`❌ Could not generate unique food after ${maxAttempts} attempts`);
+    return { success: false, error: 'Could not generate unique food after maximum attempts' };
   } catch (error) {
     console.error('Error generating AI food:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
