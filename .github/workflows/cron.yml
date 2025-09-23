@@ -23,15 +23,9 @@ on:
 
 jobs:
   trigger-cron:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Clean workspace
-        run: |
-          echo "🧹 Cleaning workspace..."
-          rm -rf .git
-          rm -rf *
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -114,6 +108,7 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OLLAMA_URL: ${{ secrets.OLLAMA_URL }}
 
       - name: Show Results
         run: |
