@@ -94,6 +94,3 @@ export interface User {
   activityLevel?: string;
   restrictions?: string[];
 }
-
-// Re-export test types for convenience
-export * from './test';
