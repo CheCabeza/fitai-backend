@@ -5,8 +5,8 @@ import { seedExercises } from './seedExercises';
 
 async function main() {
   const env = process.env['NODE_ENV'] || 'development';
-  config({ path: path.resolve(process.cwd(), `.env.${env}`) });
-  config({ path: path.resolve(process.cwd(), '.env') });
+  config({ path: path.resolve(process.cwd(), `.env.${env}`), override: true });
+  config({ path: path.resolve(process.cwd(), '.env'), override: true });
 
   const args = process.argv.slice(2);
   const onlyFoods = args.includes('--foods');
