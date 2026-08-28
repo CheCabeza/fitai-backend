@@ -1,7 +1,13 @@
+import path from 'path';
+import { config } from 'dotenv';
 import { seedFoods } from './seedFoods';
 import { seedExercises } from './seedExercises';
 
 async function main() {
+  const env = process.env['NODE_ENV'] || 'development';
+  config({ path: path.resolve(process.cwd(), `.env.${env}`) });
+  config({ path: path.resolve(process.cwd(), '.env') });
+
   const args = process.argv.slice(2);
   const onlyFoods = args.includes('--foods');
   const onlyExercises = args.includes('--exercises');
