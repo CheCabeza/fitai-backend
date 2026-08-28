@@ -29,6 +29,9 @@ export const ENV_CONFIG = {
   // OpenAI
   OPENAI_API_KEY: process.env['OPENAI_API_KEY'] || '',
 
+  // USDA FoodData Central (for seeding foods)
+  USDA_API_KEY: process.env['USDA_API_KEY'] || '',
+
   // Port
   PORT: parseInt(process.env['PORT'] || '3001', 10),
 
